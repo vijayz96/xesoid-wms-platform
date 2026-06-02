@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Zbilz - Sales Analytics Dashboard</title>
+    <title>Xesoid WMS - Master Analytics Dashboard</title>
 
     <script src="auth-guard.js"></script>
     <link rel="stylesheet" href="style.css">
@@ -13,30 +13,29 @@
     <div class="main">
         <div class="navbar">
             <div class="icon">
-                <h2 class="logo">Zbilz</h2>
+                <h2 class="logo">Xesoid WMS</h2>
             </div>
 
             <div class="menu">
                 <ul>
-                    <li><a href="view-reports.html">REPORTS</a></li>
-                    <li><a href="warehouse.html">INVENTORY</a></li>
-                    <li><a href="billing.html">BILLING</a></li>
-                    <li><a href="invoice.html">INVOICE TRACKING</a></li>
-                    <li id="adminSetupNav"><a href="setup.html">SETUP</a></li>
+                    <li><a href="adztrack.html">CORE OPERATIONS</a></li>
+                    <li><a href="trackzpot-dashboard.html">WMS EXECUTE</a></li>
+                    <li><a href="deliveries.html">DELIVERY & POD</a></li>
+                    <li><a href="invoices.html">FINANCIALS</a></li>
+                    <li><a href="analytics.html">ANALYTICS</a></li>
+                    <li id="adminSetupNav"><a href="setup.html">SETTINGS</a></li>
                 </ul>
             </div>
         </div>
 
         <div class="content">
             <h1>Sales <span>Performance</span></h1>
-
         </div>
 
         <div class="cards">
             <div class="card">
                 <h2>Total Revenue</h2>
-                <div class="live-counter" id="totalRevenue">$0.00</div>
-
+                <div class="live-counter" id="totalRevenue">₹0.00</div>
             </div>
 
             <div class="card recent-card">
@@ -44,13 +43,13 @@
                 <div id="recentItemBox">
                     <div class="recent-title" id="recentBillId">Loading...</div>
                     <div class="recent-meta">Amount: <span id="recentAmount">--</span></div>
-                    <div class="recent-meta">Status: <span id="recentStatus" style="color: #ff7c00;">--</span></div>
+                    <div class="recent-meta">Status: <span id="recentStatus" style="color: #00ff66;">--</span></div>
                 </div>
             </div>
         </div>
 
         <div class="chart-container" style="position: relative; margin: 40px auto; padding: 20px; width: 90%; max-width: 800px; background: rgba(30,30,30,0.7); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
-            <h3 style="color: #fff; margin-bottom: 15px; font-weight: 500;">Sales Price Action & Volume</h3>
+            <h3 style="color: #fff; margin-bottom: 15px; font-weight: 500;">Revenue Action & Manifest Volume</h3>
             <canvas id="salesChart"></canvas>
         </div>
     </div>
@@ -66,15 +65,12 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+        // UPDATED: Connected to your current Xesoid WMS Database
         const firebaseConfig = {
-            apiKey: "AIzaSyC7bl9e1sDibEe4BP1PzWnOhwt_gpL7abo",
-            authDomain: "zbillz-f4798.firebaseapp.com",
-            databaseURL: "https://zbillz-f4798-default-rtdb.firebaseio.com",
-            projectId: "zbillz-f4798",
-            storageBucket: "zbillz-f4798.firebasestorage.app",
-            messagingSenderId: "495466751324",
-            appId: "1:495466751324:web:324e3440f13fad0acdcd99",
-            measurementId: "G-8SZG4XLT9P"
+            apiKey: "AIzaSyBffzzeiU6mwm2mg1QzcXvXRs1XP1ikk-4",
+            authDomain: "xesoid-wms.firebaseapp.com",
+            databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/",
+            projectId: "xesoid-wms"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -91,12 +87,12 @@
         const salesChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: [], // Populated dynamically via billing database timestamps
+                labels: [], 
                 datasets: [{
-                    label: 'Revenue Action ($)',
-                    data: [], // Populated dynamically from bill amounts
-                    borderColor: '#ff7c00',
-                    backgroundColor: 'rgba(255, 124, 0, 0.1)',
+                    label: 'Quoted Revenue (₹)',
+                    data: [], 
+                    borderColor: '#ff7300',
+                    backgroundColor: 'rgba(255, 115, 0, 0.1)',
                     borderWidth: 2,
                     tension: 0.3,
                     fill: true
@@ -114,9 +110,9 @@
             }
         });
 
-        // Event Listener targeting the Billing endpoint nodes
-        const billingRef = ref(db, 'billing');
-        onValue(billingRef, (snapshot) => {
+        // UPDATED: Targeting the Xesoid customer_requests node
+        const requestsRef = ref(db, 'customer_requests');
+        onValue(requestsRef, (snapshot) => {
             if (snapshot.exists()) {
                 const data = snapshot.val();
                 let absoluteRevenue = 0;
@@ -126,25 +122,24 @@
 
                 const records = Object.entries(data);
 
-                records.forEach(([key, invoice]) => {
-                    // Change item total depending on how your billing node writes property fields (e.g., total, amount, grandTotal)
-                    const billAmount = Number(invoice.total || invoice.amount || 0);
+                records.forEach(([key, order]) => {
+                    // Pulling the total_quotation from Logizoid bookings
+                    const billAmount = Number(order.total_quotation || 0);
                     absoluteRevenue += billAmount;
 
-                    // Prepare graphics structural tracking matrix
-                    const rawDate = invoice.date || 'Record';
-                    chartLabels.push(rawDate);
+                    // Using the tracking code as the X-axis label
+                    chartLabels.push(order.tracking_code);
                     chartDataPoints.push(billAmount);
                 });
 
                 // Render metrics summaries out to cards
-                totalRevenueBox.innerText = `$${absoluteRevenue.toFixed(2)}`;
+                totalRevenueBox.innerText = `₹${absoluteRevenue.toFixed(2)}`;
 
-                // Update metrics targeting the final node array values
-                const [lastId, lastInvoice] = records[records.length - 1];
-                recentBillIdBox.innerText = `Invoice ID: ${lastId.substring(0, 8)}`;
-                recentAmountBox.innerText = `$${Number(lastInvoice.total || lastInvoice.amount || 0).toFixed(2)}`;
-                recentStatusBox.innerText = lastInvoice.status || "Paid";
+                // Grab the very last booking to display as the "Recent Order"
+                const [lastId, lastOrder] = records[records.length - 1];
+                recentBillIdBox.innerText = `Manifest: ${lastOrder.tracking_code}`;
+                recentAmountBox.innerText = `₹${Number(lastOrder.total_quotation || 0).toFixed(2)}`;
+                recentStatusBox.innerText = lastOrder.status || "Pending";
 
                 // Refresh Graphic Object Datasets
                 salesChart.data.labels = chartLabels;
@@ -152,8 +147,8 @@
                 salesChart.update();
 
             } else {
-                totalRevenueBox.innerText = "$0.00";
-                recentBillIdBox.innerText = "No Bills Evaluated";
+                totalRevenueBox.innerText = "₹0.00";
+                recentBillIdBox.innerText = "No Freight Records Found";
                 recentAmountBox.innerText = "--";
                 recentStatusBox.innerText = "--";
             }
