@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - Shipping Manifest Challan Engine</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="auth-guard.js"></script>
+    <style>
+        /* Printable styling sheet adjustments to look pristine when hard-copy is generated */
+        @media print {
+            body * { visibility: hidden; background: #fff !important; color: #000 !important; }
+            #printableChallanDocument, #printableChallanDocument * { visibility: visible; }
+            #printableChallanDocument { position: absolute; left: 0; top: 0; width: 100%; border: none !important; box-shadow: none !important; background: white !important; padding: 0 !important; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <!-- Master Navigation Bar -->
+        <div class="navbar no-print">
+            <div class="icon">
+                <h2 class="logo">Xesoid WMS</h2>
+            </div>
+            <div class="menu">
+                <ul>
+                    <li><a href="requests.html">RECEIVED REQUESTS</a></li>
+                    <li><a href="booking.html">BOOKING MODULE</a></li>
+                    <li><a href="planner.html">PLANNER</a></li>
+                    <li><a href="trips.html">ACTIVE TRIPS</a></li>
+                    <li><a href="challans.html" class="active">CHALLAN ENGINE</a></li>
+                    <li><a href="analytics.html">ANALYTICS</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section Header -->
+        <div class="content no-print">
+            <h1>Shipping Manifest <span>Challan Engine</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">Select active cargo records to draft, view, and print regulatory gate passes and delivery sheets.</p>
+        </div>
+
+        <div class="cards no-print" style="margin-bottom: 25px; padding: 0 20px;">
+            <!-- SELECT TARGET MANIFEST DROPDOWN CARD -->
+            <div class="card" style="border-left: 4px solid #ff7300; width: 100%; max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px;">
+                <h2>📜 Select Target Manifest Record Pipeline</h2>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <select id="challan_manifest_select" style="flex-grow: 1; padding: 12px; background: #16223f; border: 1px solid #3d4f73; color: white; border-radius: 4px; outline: none; font-size: 14px;">
+                        <option value="">-- Syncing Active Manifest Nodes --</option>
+                    </select>
+                    <button id="btnGenerateChallan" style="padding: 12px 24px; background: #ff7300; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12px; white-space: nowrap;">
+                        Compile Document
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LIVE DRAFT PREVIEW LEGAL WORKSPACE AREA -->
+        <div id="challanContainer" style="display: none; padding: 0 20px;">
+            <div id="printableChallanDocument" style="max-width: 900px; margin: 0 auto; background: #0d1527; border: 1px dashed #ff7300; border-radius: 8px; padding: 35px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                
+                <!-- Challan Document Header Layout -->
+                <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #ff7300; padding-bottom: 20px; margin-bottom: 25px;">
+                    <div>
+                        <h1 style="color: #ff7300; margin: 0; font-size: 28px; letter-spacing: 1px;">DELIVERY CHALLAN</h1>
+                        <span style="color: #aaa; font-size: 12px;">Xesoid Supply Chain Solutions Pvt. Ltd.</span>
+                    </div>
+                    <div style="text-align: right; color: #fff; font-size: 13px; line-height: 1.5;">
+                        <div><strong>Challan Ref:</strong> <span id="doc_challan_id" style="font-family: monospace; color: #ff7300; font-weight: bold;">--</span></div>
+                        <div><strong>Tracking Code:</strong> <span id="doc_tracking_code" style="font-family: monospace; font-weight: bold;">--</span></div>
+                        <div><strong>Issue Date:</strong> <span id="doc_issue_date">--</span></div>
+                    </div>
+                </div>
+
+                <!-- Router Consigner and Consignee Information Section Block -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; font-size: 14px; color: #ccc; line-height: 1.6;">
+                    <div style="background: rgba(255,255,255,0.02); padding: 15px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05);">
+                        <strong style="color: #fff; text-transform: uppercase; font-size: 12px; display: block; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">🏢 Sender / Consigner Profile:</strong>
+                        <div><strong>Corporate Account:</strong> <span id="doc_customer_name" style="color:#fff;">--</span></div>
+                        <div><strong>Contact Line:</strong> <span id="doc_customer_contact">--</span></div>
+                        <div><strong>Dispatch Hub Node:</strong> <span id="doc_origin" style="color:#00ff66;">--</span></div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); padding: 15px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05);">
+                        <strong style="color: #fff; text-transform: uppercase; font-size: 12px; display: block; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">📥 Shipping Target Destination / Consignee:</strong>
+                        <div><strong>Receiver Representative:</strong> <span id="doc_receiver_name" style="color:#fff;">--</span></div>
+                        <div><strong>Contact Line:</strong> <span id="doc_receiver_contact">--</span></div>
+                        <div><strong>Target Delivery Drop:</strong> <span id="doc_destination" style="color:#ff7300;">--</span></div>
+                        <div><strong>Full Postal Boundary:</strong> <span id="doc_postal_address" style="font-size:12px;">--</span></div>
+                    </div>
+                </div>
+
+                <!-- Line Item Data Table Component Structure -->
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; color: #ccc; margin-bottom: 30px;">
+                    <thead>
+                        <tr style="background: rgba(255,115,0,0.1); color: #fff; border-top: 1px solid #ff7300; border-bottom: 1px solid #ff7300;">
+                            <th style="padding: 12px;">Cargo Specification Type</th>
+                            <th style="padding: 12px;">Transport Stream Mode</th>
+                            <th style="padding: 12px;">Dimensional Volume Matrix (LxWxH)</th>
+                            <th style="padding: 12px; text-align: right;">Gross Weight</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+                            <td id="doc_package_type" style="padding: 15px; color: #fff; font-weight: bold;">--</td>
+                            <td id="doc_transport_mode" style="padding: 15px;">--</td>
+                            <td id="doc_dimensions" style="padding: 15px; font-family: monospace;">--</td>
+                            <td id="doc_weight" style="padding: 15px; text-align: right; color: #00ff66; font-family: monospace; font-weight: bold;">--</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Financial Evaluation Block Summary -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 20px; font-size: 13px; color: #aaa; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 20px;">
+                    <div>
+                        <div style="font-weight: bold; color: #fff; margin-bottom: 5px;">Declaration Terms & Conditions:</div>
+                        <div style="max-width: 500px; font-size: 11px; line-height: 1.4;">The material listed above is sent for delivery under absolute supply chain regulations. Please verify material properties at receipt bounds before signing off.</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 14px; color: #fff;">Declared Shipment Cost Evaluation:</div>
+                        <div id="doc_total_quotation" style="font-size: 26px; font-weight: bold; color: #00ff66; font-family: monospace; margin-top: 5px;">₹0.00</div>
+                    </div>
+                </div>
+
+                <!-- Legal Signature Block Authorization Triggers -->
+                <div style="display: flex; justify-content: space-between; margin-top: 60px; padding-top: 20px; font-size: 12px; color: #888;">
+                    <div style="border-top: 1px dashed rgba(255,255,255,0.3); width: 200px; text-align: center; padding-top: 8px;">Warehouse Loading Inspector Signature</div>
+                    <div style="border-top: 1px dashed rgba(255,255,255,0.3); width: 200px; text-align: center; padding-top: 8px;">Carrier Driver / Fleet Receiver</div>
+                    <div style="border-top: 1px dashed rgba(255,255,255,0.3); width: 200px; text-align: center; padding-top: 8px;">Consignee Authorized Stamp</div>
+                </div>
+
+            </div>
+
+            <!-- HARD PRINT DISPATCH TRIGGER ENGINE ACTIONS -->
+            <div class="no-print" style="text-align: right; max-width: 900px; margin: 20px auto 0 auto;">
+                <button id="btnPrintDocumentTrigger" style="padding: 14px 28px; background: #00ff66; color: black; border: none; border-radius: 4px; font-weight: bold; font-size: 13px; text-transform: uppercase; cursor: pointer; letter-spacing: 0.5px;">
+                    🖨️ Execute Print & System Download
+                </button>
+            </div>
+        </div>
+
+        <!-- LOWER NAVIGATION LINK CONTROL -->
+        <div class="text-center no-print" style="text-align: center; margin: 40px auto 30px auto; padding: 10px; width: 90%; max-width: 400px;">
+            <a href="main.html" style="display: block; padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,115,0,0.3); color: #ff7300; text-decoration: none; font-weight: bold; border-radius: 6px; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px;">
+                🏠 Return Back To Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- FIREBASE GRAPH PARSING AND HANDLING LOGIC RUNTIME -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBffzzeiU6mwm2mg1QzcXvXRs1XP1ikk-4",
+            authDomain: "xesoid-wms.firebaseapp.com",
+            databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/",
+            projectId: "xesoid-wms"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const manifestSelect = document.getElementById('challan_manifest_select');
+        const challanContainer = document.getElementById('challanContainer');
+        
+        let localDataCache = {};
+
+        // Active database stream mapping manifest selections
+        onValue(ref(db, 'customer_requests'), (snapshot) => {
+            if (snapshot.exists()) {
+                localDataCache = snapshot.val();
+                
+                const savedIndex = manifestSelect.value;
+                manifestSelect.innerHTML = '<option value="">-- Choose Target Manifest Record --</option>';
+
+                Object.entries(localDataCache).forEach(([key, order]) => {
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = `${order.tracking_code} - ${order.customer_name}`;
+                    manifestSelect.appendChild(option);
+                });
+
+                manifestSelect.value = savedIndex;
+            } else {
+                manifestSelect.innerHTML = '<option value="">No Active Freight Logs Found</option>';
+            }
+        });
+
+        // Compile Document Command Action Action Handlers
+        document.getElementById('btnGenerateChallan').addEventListener('click', () => {
+            const chosenId = manifestSelect.value;
+            if (!chosenId) return alert('Please highlight a legitimate manifest sequence pipeline before drawing compilations.');
+
+            const targetManifestData = localDataCache[chosenId];
+            if (!targetManifestData) return;
+
+            // Generate structural unique random references representing the generated document block
+            const randomChallanNo = `CH-${Math.floor(100000 + Math.random() * 900000)}`;
+            const standardCurrentDate = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            // Feed innerText properties across the document markup elements view block
+            document.getElementById('doc_challan_id').innerText = randomChallanNo;
+            document.getElementById('doc_tracking_code').innerText = targetManifestData.tracking_code || '--';
+            document.getElementById('doc_issue_date').innerText = standardCurrentDate;
+            
+            document.getElementById('doc_customer_name').innerText = targetManifestData.customer_name || '--';
+            document.getElementById('doc_customer_contact').innerText = targetManifestData.customer_contact || '--';
+            document.getElementById('doc_origin').innerText = targetManifestData.origin || '--';
+            
+            document.getElementById('doc_receiver_name').innerText = targetManifestData.receiver_name || '--';
+            document.getElementById('doc_receiver_contact').innerText = targetManifestData.receiver_contact || '--';
+            document.getElementById('doc_destination').innerText = targetManifestData.destination || '--';
+            document.getElementById('doc_postal_address').innerText = targetManifestData.postal_address || '--';
+
+            document.getElementById('doc_package_type').innerText = targetManifestData.package_type || 'Standard Cargo';
+            document.getElementById('doc_transport_mode').innerText = targetManifestData.transport_mode || 'Linehaul Ground';
+            document.getElementById('doc_dimensions').innerText = `${targetManifestData.length || 0} x ${targetManifestData.width || 0} x ${targetManifestData.height || 0} cm`;
+            document.getElementById('doc_weight').innerText = `${Number(targetManifestData.weight_kg || 0).toFixed(2)} KG`;
+            
+            document.getElementById('doc_total_quotation').innerText = `₹${Number(targetManifestData.total_quotation || 0).toFixed(2)}`;
+
+            // Expose compilation view container module window box
+            challanContainer.style.display = 'block';
+            
+            // Smoothly scroll panel to let operators scan compiled layout parameters
+            challanContainer.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // Window Native Browser Printing Routing Bindings
+        document.getElementById('btnPrintDocumentTrigger').addEventListener('click', () => {
+            window.print();
+        });
+    </script>
+</body>
+</html>
