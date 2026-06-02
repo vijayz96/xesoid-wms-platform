@@ -1,1 +1,248 @@
-ghg
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - Booking Command Module</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="auth-guard.js"></script>
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon">
+                <h2 class="logo">Xesoid WMS</h2>
+            </div>
+            <div class="menu">
+                <ul>
+                    <li><a href="requests.html">RECEIVED REQUESTS</a></li>
+                    <li><a href="booking.html" class="active">BOOKING MODULE</a></li>
+                    <li><a href="adztrack.html">CORE OPERATIONS</a></li>
+                    <li><a href="trackzpot-dashboard.html">WMS EXECUTE</a></li>
+                    <li><a href="deliveries.html">DELIVERY & POD</a></li>
+                    <li><a href="analytics.html">ANALYTICS</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content">
+            <h1>Booking & <span>Asset Allocation</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">Deploy fleet channels, log master cargo configurations, schedule manifests, and track route telemetry.</p>
+        </div>
+
+        <div class="cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; padding: 20px;">
+            
+            <div class="card" style="border-top: 4px solid #ff7300; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <h2>🚚 Pickup Request Page</h2>
+                    <p style="color: #888; font-size: 12px; margin-bottom: 15px;">Interface to request active cargo vehicles from the terminal gate.</p>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <input type="text" id="pickup_vehicle_type" placeholder="Required Vehicle Type (e.g., 20ft Container)" style="padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                    <input type="date" id="pickup_target_date" style="padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                    <input type="text" id="pickup_location" placeholder="Loading Dock / Pickup Address" style="padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                    <button id="btnSubmitPickup" style="padding:10px; background:#ff7300; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer; text-transform:uppercase; font-size:11px;">Request Cargo Vehicle</button>
+                </div>
+            </div>
+
+            <div class="card" style="border-top: 4px solid #ff7300; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <h2>📦 Consignment Page</h2>
+                    <p style="color: #888; font-size: 12px; margin-bottom: 15px;">Form to register master cargo profiles and SKU classifications into inventory.</p>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <input type="text" id="consign_sku" placeholder="Material Code / Master SKU" style="padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                    <input type="text" id="consign_desc" placeholder="Cargo Contents & Hazard Class" style="padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                    <input type="number" id="consign_weight" placeholder="Standard Gross Weight (KG)" style="padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                    <button id="btnSaveConsignment" style="padding:10px; background:#ff7300; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer; text-transform:uppercase; font-size:11px;">Register Cargo Profile</button>
+                </div>
+            </div>
+
+            <div class="card" style="border-top: 4px solid #ff7300; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <h2>📅 Planner Page</h2>
+                    <p style="color: #888; font-size: 12px; margin-bottom: 15px;">Calendar and timeline orchestration engine to schedule upcoming shipments.</p>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <select id="planner_manifest_select" style="padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                        <option value="">-- Select Active Manifest Code --</option>
+                    </select>
+                    <input type="date" id="planner_execution_date" style="padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                    <button id="btnScheduleManifest" style="padding:10px; background:#ff7300; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer; text-transform:uppercase; font-size:11px;">Lock Timeline Slot</button>
+                </div>
+            </div>
+
+            <div class="card" style="border-top: 4px solid #ff7300; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <h2>🛣️ Trips Page</h2>
+                    <p style="color: #888; font-size: 12px; margin-bottom: 10px;">Active routing management window showing live tracking and transit nodes.</p>
+                </div>
+                <div id="liveTripsContainer" style="height:165px; overflow-y:auto; background:rgba(0,0,0,0.3); padding:10px; border-radius:4px; font-size:12px; color:#ccc; border:1px solid rgba(255,255,255,0.05);">
+                    Streaming active manifest telematics...
+                </div>
+            </div>
+
+            <div class="card" style="border-top: 4px solid #ff7300; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <h2>📜 Challans Page</h2>
+                    <p style="color: #888; font-size: 12px; margin-bottom: 15px;">Document generation node for printing formal transport shipping manifests.</p>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <select id="challan_manifest_select" style="padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                        <option value="">-- Select Target Manifest Code --</option>
+                    </select>
+                    <button id="btnPrintChallan" style="padding:10px; background:#00ff66; color:black; border:none; border-radius:4px; font-weight:bold; cursor:pointer; text-transform:uppercase; font-size:11px;">Draft & Print Legal Challan</button>
+                </div>
+            </div>
+
+            <div class="card" style="border-top: 4px solid #ff7300; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <h2>🤝 Market Vehicle Page</h2>
+                    <p style="color: #888; font-size: 12px; margin-bottom: 15px;">Marketplace procurement portal to hire external third-party vendor trucks.</p>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <input type="text" id="market_transporter" placeholder="Vendor Agency / Transporter Name" style="padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                    <input type="text" id="market_plate" placeholder="Truck License Container Plate No." style="padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                    <input type="number" id="market_cost" placeholder="Agreed Freight Contract Price (₹)" style="padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                    <button id="btnHireMarketVehicle" style="padding:10px; background:#ff7300; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer; text-transform:uppercase; font-size:11px;">Bind Open-Market Truck</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div style="text-align: center; margin: 40px auto 30px auto; padding: 10px; width: 90%; max-width: 400px;">
+            <a href="main.html" style="display: block; padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,115,0,0.3); color: #ff7300; text-decoration: none; font-weight: bold; border-radius: 6px; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px; transition: all 0.2s;">
+                🏠 Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, push, set, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBffzzeiU6mwm2mg1QzcXvXRs1XP1ikk-4",
+            authDomain: "xesoid-wms.firebaseapp.com",
+            databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/",
+            projectId: "xesoid-wms"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const plannerSelect = document.getElementById('planner_manifest_select');
+        const challanSelect = document.getElementById('challan_manifest_select');
+        const tripsContainer = document.getElementById('liveTripsContainer');
+
+        // Continuous streaming from the shared customer_requests pipeline
+        onValue(ref(db, 'customer_requests'), (snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                
+                const cachedPlannerSelection = plannerSelect.value;
+                const cachedChallanSelection = challanSelect.value;
+
+                plannerSelect.innerHTML = '<option value="">-- Select Active Manifest Code --</option>';
+                challanSelect.innerHTML = '<option value="">-- Select Target Manifest Code --</option>';
+                tripsContainer.innerHTML = '';
+
+                Object.entries(data).forEach(([key, manifest]) => {
+                    const dropdownOption = `<option value="${key}">${manifest.tracking_code} [${manifest.customer_name}]</option>`;
+                    plannerSelect.insertAdjacentHTML('beforeend', dropdownOption);
+                    challanSelect.insertAdjacentHTML('beforeend', dropdownOption);
+
+                    // Build dynamic data nodes inside Trips Card
+                    const runStage = manifest.status || 'Under Review';
+                    let stageBadgeColor = '#ffb300';
+                    if (runStage === "Slotted in Storage") stageBadgeColor = '#00ff66';
+                    if (runStage === "Work Order Dispatched") stageBadgeColor = '#ff7300';
+
+                    tripsContainer.insertAdjacentHTML('beforeend', `
+                        <div style="border-bottom:1px solid rgba(255,255,255,0.05); padding:6px 0; line-height:1.4;">
+                            <strong style="color:#ff7300; font-family:monospace;">${manifest.tracking_code}:</strong> ${manifest.origin} ➔ ${manifest.destination} <br>
+                            <span style="color:${stageBadgeColor}; font-size:11px; font-weight:bold;">⚡ Transit Stage: ${runStage}</span>
+                        </div>
+                    `);
+                });
+
+                plannerSelect.value = cachedPlannerSelection;
+                challanSelect.value = cachedChallanSelection;
+            } else {
+                tripsContainer.innerHTML = '<p style="color:#666;">No routing profiles tracked in cloud.</p>';
+            }
+        });
+
+        // 1. Submit Vehicle Pickup Form
+        document.getElementById('btnSubmitPickup').addEventListener('click', () => {
+            const vehicle = document.getElementById('pickup_vehicle_type').value.trim();
+            const date = document.getElementById('pickup_target_date').value;
+            const location = document.getElementById('pickup_location').value.trim();
+
+            if (!vehicle || !date || !location) return alert('Fill out all parameter boxes to launch vehicle requests.');
+
+            const newPickupRef = push(ref(db, 'pickup_requests'));
+            set(newPickupRef, { vehicle_type: vehicle, assignment_date: date, dock_location: location, created_at: Date.now() })
+                .then(() => { 
+                    alert('Logistics pickup request transmitted safely to gate operations!');
+                    document.getElementById('pickup_vehicle_type').value = '';
+                    document.getElementById('pickup_location').value = '';
+                });
+        });
+
+        // 2. Submit Master Consignment Registry SKU
+        document.getElementById('btnSaveConsignment').addEventListener('click', () => {
+            const sku = document.getElementById('consign_sku').value.trim();
+            const desc = document.getElementById('consign_desc').value.trim();
+            const weight = document.getElementById('consign_weight').value;
+
+            if (!sku || !desc || !weight) return alert('Complete all entry fields to cache SKU inventory definitions.');
+
+            set(ref(db, `master_consignments/${sku}`), { sku_id: sku, cargo_description: desc, cross_weight_kg: weight })
+                .then(() => { 
+                    alert(`Master Cargo Profile [${sku}] cataloged inside the system memory matrix.`);
+                    document.getElementById('consign_sku').value = '';
+                    document.getElementById('consign_desc').value = '';
+                    document.getElementById('consign_weight').value = '';
+                });
+        });
+
+        // 3. Update Shipment Allocation Planning Target Timeline
+        document.getElementById('btnScheduleManifest').addEventListener('click', () => {
+            const manifestId = plannerSelect.value;
+            const targetRunDate = document.getElementById('planner_execution_date').value;
+
+            if (!manifestId || !targetRunDate) return alert('Select an active cargo tracking string and timeline date.');
+
+            update(ref(db, `customer_requests/${manifestId}`), { operational_plan_date: targetRunDate })
+                .then(() => { alert('Shipment itinerary scheduled and updated in cloud dashboards!'); });
+        });
+
+        // 5. Intercept Manifest Print Actions to Output Official Document Formats
+        document.getElementById('btnPrintChallan').addEventListener('click', () => {
+            const manifestId = challanSelect.value;
+            if (!manifestId) return alert('Select a package target routing vector to output legal document sheets.');
+            
+            alert(`Opening Legal Challan Manifest Stream for Database Registry Index: ${manifestId}\n\nLoading printable system print views...`);
+            window.print();
+        });
+
+        // 6. Register Contract Outsource Vehicles
+        document.getElementById('btnHireMarketVehicle').addEventListener('click', () => {
+            const vendor = document.getElementById('market_transporter').value.trim();
+            const plate = document.getElementById('market_plate').value.trim();
+            const cost = document.getElementById('market_cost').value;
+
+            if (!vendor || !plate || !cost) return alert('All third-party parameters must be defined before fleet integration.');
+
+            const newMarketRef = push(ref(db, 'market_vehicles'));
+            set(newMarketRef, { vendor_agency: vendor, container_plate: plate, charter_cost_inr: cost, registered_at: Date.now() })
+                .then(() => { 
+                    alert(`Contract vehicle [${plate}] loaded into open allocation pools.`);
+                    document.getElementById('market_transporter').value = '';
+                    document.getElementById('market_plate').value = '';
+                    document.getElementById('market_cost').value = '';
+                });
+        });
+    </script>
+</body>
+</html>
