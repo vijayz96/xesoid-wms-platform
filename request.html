@@ -1,1 +1,254 @@
-bh
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - Received Requests Terminal</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="auth-guard.js"></script>
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon">
+                <h2 class="logo">Xesoid WMS</h2>
+            </div>
+            <div class="menu">
+                <ul>
+                    <li><a href="requests.html" class="active">RECEIVED REQUESTS</a></li>
+                    <li><a href="adztrack.html">CORE OPERATIONS</a></li>
+                    <li><a href="trackzpot-dashboard.html">WMS EXECUTE</a></li>
+                    <li><a href="deliveries.html">DELIVERY & POD</a></li>
+                    <li><a href="invoices.html">FINANCIALS</a></li>
+                    <li><a href="analytics.html">ANALYTICS</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content">
+            <h1>Received <span>Logistics Requests</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">Review every incoming booking conduit and update parameters in real-time.</p>
+        </div>
+
+        <div class="cards" id="requestsGrid">
+            <div style="color: #aaa; padding: 20px;">Establishing secure stream to customer_requests node...</div>
+        </div>
+    </div>
+
+    <div id="updateModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; overflow-y: auto; padding: 40px 20px;">
+        <div style="max-width: 700px; margin: 0 auto; background: #0d1527; border: 1px solid #ff7300; border-radius: 12px; padding: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
+                <h2 style="color: #fff; margin: 0;">Update Manifest Details (<span id="modTrackCode" style="color:#ff7300;"></span>)</h2>
+                <button onclick="closeModal()" style="background: transparent; border: none; color: #ff7300; font-size: 24px; cursor: pointer;">&times;</button>
+            </div>
+
+            <form id="updateForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div style="grid-column: 1 / -1;"><h4 style="color: #ff7300; margin: 5px 0 0 0; text-transform: uppercase; font-size: 12px;">1. Client & Billing Context</h4></div>
+                <div>
+                    <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Customer/Corporate Name</label>
+                    <input type="text" id="edit_customer_name" style="width:100%; padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px;">
+                </div>
+                <div>
+                    <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Customer Contact Number</label>
+                    <input type="text" id="edit_customer_contact" style="width:100%; padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px;">
+                </div>
+
+                <div style="grid-column: 1 / -1;"><h4 style="color: #ff7300; margin: 15px 0 0 0; text-transform: uppercase; font-size: 12px;">2. Cargo Dimensional Metrics</h4></div>
+                <div>
+                    <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Package Weight (KG)</label>
+                    <input type="number" id="edit_weight_kg" style="width:100%; padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px;">
+                </div>
+                <div>
+                    <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Packing Configuration Type</label>
+                    <input type="text" id="edit_package_type" style="width:100%; padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px;">
+                </div>
+                <div>
+                    <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Transportation Stream Mode</label>
+                    <input type="text" id="edit_transport_mode" style="width:100%; padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px;">
+                </div>
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" id="edit_length" placeholder="L" style="width:33%; padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px;">
+                    <input type="text" id="edit_width" placeholder="W" style="width:33%; padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px;">
+                    <input type="text" id="edit_height" placeholder="H" style="width:33%; padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px;">
+                </div>
+
+                <div style="grid-column: 1 / -1;"><h4 style="color: #ff7300; margin: 15px 0 0 0; text-transform: uppercase; font-size: 12px;">3. Logistics Node Routing</h4></div>
+                <div>
+                    <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Physical Pickup Origin Hub</label>
+                    <input type="text" id="edit_origin" style="width:100%; padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px;">
+                </div>
+                <div>
+                    <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Target Delivery Dispatch Center</label>
+                    <input type="text" id="edit_destination" style="width:100%; padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px;">
+                </div>
+
+                <div style="grid-column: 1 / -1;"><h4 style="color: #ff7300; margin: 15px 0 0 0; text-transform: uppercase; font-size: 12px;">4. Receiver Endorsement</h4></div>
+                <div>
+                    <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Receiver Complete Name</label>
+                    <input type="text" id="edit_receiver_name" style="width:100%; padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px;">
+                </div>
+                <div>
+                    <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Receiver Contact No.</label>
+                    <input type="text" id="edit_receiver_contact" style="width:100%; padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px;">
+                </div>
+                <div style="grid-column: 1 / -1;">
+                    <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Drop-off Postal Address Block</label>
+                    <input type="text" id="edit_postal_address" style="width:100%; padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px;">
+                </div>
+
+                <div style="grid-column: 1 / -1;"><h4 style="color: #ff7300; margin: 15px 0 0 0; text-transform: uppercase; font-size: 12px;">5. System Administrative State</h4></div>
+                <div>
+                    <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Valuation Pricing (₹)</label>
+                    <input type="number" id="edit_total_quotation" style="width:100%; padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px;">
+                </div>
+                <div>
+                    <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Live Journey Step Status</label>
+                    <select id="edit_status" style="width:100%; padding:8px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px;">
+                        <option value="Pending Officer Review">Pending Officer Review</option>
+                        <option value="Work Order Dispatched">Work Order Dispatched</option>
+                        <option value="Slotted in Storage">Slotted in Storage</option>
+                        <option value="Outbound Clearing">Outbound Clearing</option>
+                    </select>
+                </div>
+
+                <div style="grid-column: 1 / -1; margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" onclick="closeModal()" style="padding: 10px 20px; background: #3d4f73; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Cancel</button>
+                    <button type="button" id="saveRequestBtn" style="padding: 10px 20px; background: #ff7300; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Commit Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBffzzeiU6mwm2mg1QzcXvXRs1XP1ikk-4",
+            authDomain: "xesoid-wms.firebaseapp.com",
+            databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/",
+            projectId: "xesoid-wms"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const requestsGrid = document.getElementById('requestsGrid');
+
+        // Global memory cache to manage deep updates instantly
+        let activeRequestsCache = {};
+
+        // Stream connection to customer_requests pipeline
+        const requestsRef = ref(db, 'customer_requests');
+        onValue(requestsRef, (snapshot) => {
+            if (snapshot.exists()) {
+                requestsGrid.innerHTML = '';
+                activeRequestsCache = snapshot.val();
+                
+                Object.entries(activeRequestsCache).forEach(([key, order]) => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.style.borderLeft = '4px solid #ff7300';
+                    card.style.marginBottom = '20px';
+                    card.style.padding = '20px';
+
+                    card.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+                            <div>
+                                <h3 style="margin:0; color:#fff;">Code: <span style="color:#ff7300; font-family:monospace;">${order.tracking_code}</span></h3>
+                                <span style="font-size:11px; background:rgba(255,115,0,0.15); color:#ff7300; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-block; margin-top:4px;">STATUS: ${order.status || 'Pending Review'}</span>
+                            </div>
+                            <div style="color:#00ff66; font-size:20px; font-family:monospace; font-weight:bold;">₹${Number(order.total_quotation || 0).toFixed(2)}</div>
+                        </div>
+                        
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:13px; color:#ccc;">
+                            <div><strong>👤 Client:</strong> ${order.customer_name} (${order.customer_contact})</div>
+                            <div><strong>📦 Specs:</strong> ${order.weight_kg}kg | ${order.package_type} [${order.length || 0}x${order.width || 0}x${order.height || 0}cm]</div>
+                            <div><strong>📍 Route:</strong> ${order.origin} ➔ ${order.destination}</div>
+                            <div><strong>⚡ Mode:</strong> ${order.transport_mode}</div>
+                            <div style="grid-column: 1 / -1; border-top:1px dashed rgba(255,255,255,0.05); padding-top:8px; margin-top:4px;">
+                                <strong>📥 Receiver:</strong> ${order.receiver_name} (${order.receiver_contact}) <br>
+                                <strong>🏠 Delivery Dropoff Address:</strong> ${order.postal_address}
+                            </div>
+                        </div>
+
+                        <div style="margin-top:15px; text-align:right;">
+                            <button class="edit-trigger-btn" data-id="${key}" style="padding:6px 14px; background:#ff7300; color:#white; border:none; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">✏️ MODIFY REQUEST FIELD</button>
+                        </div>
+                    `;
+                    requestsGrid.appendChild(card);
+                });
+
+                // Attach events dynamically to individual workspace buttons
+                document.querySelectorAll('.edit-trigger-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => openUpdateWorkspace(e.target.dataset.id));
+                });
+
+            } else {
+                requestsGrid.innerHTML = '<div style="color: #aaa; padding: 20px;">No inbound freight manifests logged yet.</div>';
+            }
+        });
+
+        // Populate fields and launch modal layout workspace
+        function openUpdateWorkspace(trackId) {
+            const data = activeRequestsCache[trackId];
+            if (!data) return;
+
+            document.getElementById('modTrackCode').innerText = trackId;
+            document.getElementById('edit_customer_name').value = data.customer_name || '';
+            document.getElementById('edit_customer_contact').value = data.customer_contact || '';
+            document.getElementById('edit_weight_kg').value = data.weight_kg || '';
+            document.getElementById('edit_package_type').value = data.package_type || '';
+            document.getElementById('edit_transport_mode').value = data.transport_mode || '';
+            document.getElementById('edit_length').value = data.length || '';
+            document.getElementById('edit_width').value = data.width || '';
+            document.getElementById('edit_height').value = data.height || '';
+            document.getElementById('edit_origin').value = data.origin || '';
+            document.getElementById('edit_destination').value = data.destination || '';
+            document.getElementById('edit_receiver_name').value = data.receiver_name || '';
+            document.getElementById('edit_receiver_contact').value = data.receiver_contact || '';
+            document.getElementById('edit_postal_address').value = data.postal_address || '';
+            document.getElementById('edit_total_quotation').value = data.total_quotation || '';
+            document.getElementById('edit_status').value = data.status || 'Pending Officer Review';
+
+            document.getElementById('updateModal').style.display = 'block';
+
+            // Bind update routine to submit workflow engine
+            document.getElementById('saveRequestBtn').onclick = () => saveManifestExecution(trackId);
+        }
+
+        // Commit edited values straight back to Firebase
+        function saveManifestExecution(trackId) {
+            const updatedPayload = {
+                customer_name: document.getElementById('edit_customer_name').value,
+                customer_contact: document.getElementById('edit_customer_contact').value,
+                weight_kg: document.getElementById('edit_weight_kg').value,
+                package_type: document.getElementById('edit_package_type').value,
+                transport_mode: document.getElementById('edit_transport_mode').value,
+                length: document.getElementById('edit_length').value,
+                width: document.getElementById('edit_width').value,
+                height: document.getElementById('edit_height').value,
+                origin: document.getElementById('edit_origin').value,
+                destination: document.getElementById('edit_destination').value,
+                receiver_name: document.getElementById('edit_receiver_name').value,
+                receiver_contact: document.getElementById('edit_receiver_contact').value,
+                postal_address: document.getElementById('edit_postal_address').value,
+                total_quotation: document.getElementById('edit_total_quotation').value,
+                status: document.getElementById('edit_status').value
+            };
+
+            update(ref(db, `customer_requests/${trackId}`), updatedPayload)
+                .then(() => {
+                    alert(`Manifest ${trackId} parameters committed safely to the cloud!`);
+                    closeModal();
+                })
+                .catch((err) => {
+                    alert(`WMS Intercept Error: ${err.message}`);
+                });
+        }
+
+        // Global accessibility routines for modal toggle switches
+        window.closeModal = function() {
+            document.getElementById('updateModal').style.display = 'none';
+        };
+    </script>
+</body>
+</html>
