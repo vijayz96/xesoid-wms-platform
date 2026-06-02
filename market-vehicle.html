@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - Market Vehicle Sourcing</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="auth-guard.js"></script>
+</head>
+<body>
+    <div class="main">
+        <!-- Master Navigation Bar -->
+        <div class="navbar">
+            <div class="icon">
+                <h2 class="logo">Xesoid WMS</h2>
+            </div>
+            <div class="menu">
+                <ul>
+                    <li><a href="requests.html">RECEIVED REQUESTS</a></li>
+                    <li><a href="booking.html">BOOKING MODULE</a></li>
+                    <li><a href="trips.html">ACTIVE TRIPS</a></li>
+                    <li><a href="challans.html">CHALLAN ENGINE</a></li>
+                    <li><a href="market-vehicle.html" class="active">MARKET VEHICLES</a></li>
+                    <li><a href="analytics.html">ANALYTICS</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section Header -->
+        <div class="content">
+            <h1>Third-Party <span>Vehicle Marketplace</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">Hire external line-haul vendor trucks, secure charter spot rates, and map auxiliary carrier support logs.</p>
+        </div>
+
+        <div class="cards" style="display: flex; flex-direction: column; gap: 25px; padding: 20px;">
+            
+            <!-- VENDOR PROCUREMENT FORM CARD -->
+            <div class="card" style="border-left: 4px solid #ff7300; width: 100%; max-width: 800px; margin: 0 auto;">
+                <h2 style="margin-bottom: 15px;">🤝 Contract External Charter Asset</h2>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Vendor Agency / Transporter Name</label>
+                        <input type="text" id="market_transporter" placeholder="e.g., DHL Logistics, BlueDart Charter" style="width:100%; padding:10px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                    </div>
+                    <div>
+                        <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Agreed Charter Spot Price (₹)</label>
+                        <input type="number" id="market_cost" placeholder="e.g., 45000" style="width:100%; padding:10px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Truck Registration License Plate / Container No.</label>
+                        <input type="text" id="market_plate" placeholder="e.g., MH-12-QW-9843 / HR-55-AA-1029" style="width:100%; padding:10px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; text-align: right;">
+                    <button id="btnHireMarketVehicle" style="padding: 12px 24px; background: #ff7300; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">
+                        Bind External Truck Asset
+                    </button>
+                </div>
+            </div>
+
+            <!-- LIVE MARKET VEHICLE CONTRACT LEDGER CARD -->
+            <div class="card" style="border-left: 4px solid #ff7300; width: 100%; max-width: 800px; margin: 0 auto;">
+                <h2>📋 Active Market Sourcing Ledger</h2>
+                <p style="color: #888; font-size: 12px; margin-bottom: 15px;">Historical audit log tracing third-party freight vehicles bound to regional distributions.</p>
+                
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; color: #ccc;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid rgba(255,115,0,0.3); color: #fff;">
+                                <th style="padding: 10px;">Contract ID</th>
+                                <th style="padding: 10px;">Transporter Agency</th>
+                                <th style="padding: 10px;">Container License Plate</th>
+                                <th style="padding: 10px; text-align: right;">Contract Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody id="marketVehiclesTableBody">
+                            <tr>
+                                <td colspan="4" style="padding: 20px; text-align: center; color: #666;">Streaming active open-market contracts pipeline...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- LOWER NAVIGATION SECTION BACK TO MASTER MAIN TERMINAL -->
+        <div style="text-align: center; margin: 30px auto 30px auto; padding: 10px; width: 90%; max-width: 400px;">
+            <a href="main.html" style="display: block; padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,115,0,0.3); color: #ff7300; text-decoration: none; font-weight: bold; border-radius: 6px; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px;">
+                🏠 Return Back To Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- FIREBASE NODE PROCUREMENT ROUTINES -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // Connect to active Xesoid WMS database structures
+        const firebaseConfig = {
+            apiKey: "AIzaSyBffzzeiU6mwm2mg1QzcXvXRs1XP1ikk-4",
+            authDomain: "xesoid-wms.firebaseapp.com",
+            databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/",
+            projectId: "xesoid-wms"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const tableBody = document.getElementById('marketVehiclesTableBody');
+
+        // Form Commit Callback Hook Listener
+        document.getElementById('btnHireMarketVehicle').addEventListener('click', () => {
+            const partnerAgency = document.getElementById('market_transporter').value.trim();
+            const truckPlate = document.getElementById('market_plate').value.trim().toUpperCase();
+            const charterCost = document.getElementById('market_cost').value;
+
+            if (!partnerAgency || !truckPlate || !charterCost) {
+                return alert('Please supply all vendor metadata credentials to bind this third-party shipment.');
+            }
+
+            // Create auto-increment reference hash key inside market_vehicles branch
+            const newMarketAssetRef = push(ref(db, 'market_vehicles'));
+            set(newMarketAssetRef, {
+                vendor_agency: partnerAgency,
+                container_plate: truckPlate,
+                charter_cost_inr: Number(charterCost).toFixed(2),
+                timestamp: Date.now()
+            })
+            .then(() => {
+                alert(`Contracted Asset [${truckPlate}] successfully integrated into allocation pools.`);
+                document.getElementById('market_transporter').value = '';
+                document.getElementById('market_plate').value = '';
+                document.getElementById('market_cost').value = '';
+            })
+            .catch((err) => {
+                alert(`Database Write Rejection: ${err.message}`);
+            });
+        });
+
+        // Continuous Data Node Pipeline Interceptor
+        onValue(ref(db, 'market_vehicles'), (snapshot) => {
+            if (snapshot.exists()) {
+                tableBody.innerHTML = '';
+                const entries = snapshot.val();
+
+                // Reverse sequence execution to show recent contract items at the top edge rows
+                Object.entries(entries).reverse().forEach(([dbKey, vehicle]) => {
+                    const row = document.createElement('tr');
+                    row.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                    
+                    row.innerHTML = `
+                        <td style="padding: 12px; font-family: monospace; color: #ff7300;">${dbKey.substring(0, 8)}</td>
+                        <td style="padding: 12px; color: #fff; font-weight: bold;">${vehicle.vendor_agency}</td>
+                        <td style="padding: 12px; font-family: monospace; letter-spacing: 0.5px;">${vehicle.container_plate}</td>
+                        <td style="padding: 12px; text-align: right; color: #00ff66; font-family: monospace; font-weight: bold;">₹${vehicle.charter_cost_inr}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                tableBody.innerHTML = `<tr><td colspan="4" style="padding: 20px; text-align: center; color: #666;">No external marketplace vehicles currently bound to assignments.</td></tr>`;
+            }
+        });
+    </script>
+</body>
+</html>
