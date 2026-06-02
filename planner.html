@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - Shipment Schedule Planner</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="auth-guard.js"></script>
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon">
+                <h2 class="logo">Xesoid WMS</h2>
+            </div>
+            <div class="menu">
+                <ul>
+                    <li><a href="requests.html">RECEIVED REQUESTS</a></li>
+                    <li><a href="booking.html">BOOKING MODULE</a></li>
+                    <li><a href="pickup-request.html">PICKUP REQUESTS</a></li>
+                    <li><a href="consignment.html">CONSIGNMENT REGISTRY</a></li>
+                    <li><a href="planner.html" class="active">SHIPMENT PLANNER</a></li>
+                    <li><a href="analytics.html">ANALYTICS</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content">
+            <h1>Shipment <span>Schedule Planner</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">Map manifest pipelines to target operational timelines and track upcoming line-haul slots.</p>
+        </div>
+
+        <div class="cards" style="display: flex; flex-direction: column; gap: 25px; padding: 20px;">
+            
+            <div class="card" style="border-left: 4px solid #ff7300; width: 100%; max-width: 800px; margin: 0 auto;">
+                <h2 style="margin-bottom: 15px;">📅 Assign Shipment Time-Slot</h2>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Select Active Open Manifest</label>
+                        <select id="planner_manifest_select" style="width:100%; padding:10px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                            <option value="">-- Fetching Available Tracking Codes --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Logistics Execution Date</label>
+                        <input type="date" id="planner_execution_date" style="width:100%; padding:10px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; text-align: right;">
+                    <button id="btnScheduleManifest" style="padding: 12px 24px; background: #ff7300; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">
+                        Lock Schedule Slot
+                    </button>
+                </div>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #ff7300; width: 100%; max-width: 800px; margin: 0 auto;">
+                <h2>📋 Master Logistics Itinerary Timeline</h2>
+                <p style="color: #888; font-size: 12px; margin-bottom: 15px;">Chronological dispatch log for verified cargo shipments.</p>
+                
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; color: #ccc;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid rgba(255,115,0,0.3); color: #fff;">
+                                <th style="padding: 10px;">Scheduled Date</th>
+                                <th style="padding: 10px;">Tracking Code</th>
+                                <th style="padding: 10px;">Corporate Customer</th>
+                                <th style="padding: 10px;">Route Target Path</th>
+                                <th style="padding: 10px;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="timelineTableBody">
+                            <tr>
+                                <td colspan="5" style="padding: 20px; text-align: center; color: #666;">Synchronizing calendar matrix variables...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <div style="text-align: center; margin: 30px auto 30px auto; padding: 10px; width: 90%; max-width: 400px;">
+            <a href="main.html" style="display: block; padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,115,0,0.3); color: #ff7300; text-decoration: none; font-weight: bold; border-radius: 6px; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px;">
+                🏠 Return Back To Dashboard
+            </a>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // Connected to Xesoid WMS Live Database Cluster
+        const firebaseConfig = {
+            apiKey: "AIzaSyBffzzeiU6mwm2mg1QzcXvXRs1XP1ikk-4",
+            authDomain: "xesoid-wms.firebaseapp.com",
+            databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/",
+            projectId: "xesoid-wms"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const manifestSelect = document.getElementById('planner_manifest_select');
+        const tableBody = document.getElementById('timelineTableBody');
+
+        // Real-Time Listener targeting customer_requests endpoint node
+        onValue(ref(db, 'customer_requests'), (snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                
+                // Cache active select element choice during re-renders
+                const currentSelection = manifestSelect.value;
+                
+                manifestSelect.innerHTML = '<option value="">-- Select Active Open Manifest --</option>';
+                tableBody.innerHTML = '';
+
+                // Lists to help assemble structured itinerary layout logic
+                let scheduledItems = [];
+
+                Object.entries(data).forEach(([key, order]) => {
+                    // Populate select entry values
+                    const dropdownOption = document.createElement('option');
+                    dropdownOption.value = key;
+                    dropdownOption.textContent = `${order.tracking_code} (${order.customer_name})`;
+                    manifestSelect.appendChild(dropdownOption);
+
+                    // Push entries that contain operational planning dates into arrays
+                    if (order.operational_plan_date) {
+                        scheduledItems.push({
+                            date: order.operational_plan_date,
+                            code: order.tracking_code,
+                            customer: order.customer_name,
+                            route: `${order.origin} ➔ ${order.destination}`,
+                            status: order.status || "Pending Officer Review"
+                        });
+                    }
+                });
+
+                // Restore previous drop selection index
+                manifestSelect.value = currentSelection;
+
+                // Sort our itinerary timeline chronologically by target date field
+                scheduledItems.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                if (scheduledItems.length > 0) {
+                    scheduledItems.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                        
+                        row.innerHTML = `
+                            <td style="padding: 12px; font-weight: bold; color: #00ff66; font-family: monospace;">${item.date}</td>
+                            <td style="padding: 12px; color: #ff7300; font-family: monospace; font-weight: bold;">${item.code}</td>
+                            <td style="padding: 12px; color: #fff;">${item.customer}</td>
+                            <td style="padding: 12px; color: #aaa;">${item.route}</td>
+                            <td style="padding: 12px;"><span style="color: #ff7300; font-size:11px; font-weight:bold; background:rgba(255,115,0,0.1); padding:3px 8px; border-radius:4px;">${item.status}</span></td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                } else {
+                    tableBody.innerHTML = `<tr><td colspan="5" style="padding: 20px; text-align: center; color: #666;">No cargo runs assigned to timeline calendars yet.</td></tr>`;
+                }
+
+            } else {
+                manifestSelect.innerHTML = '<option value="">No configurations tracked in cloud</option>';
+                tableBody.innerHTML = `<tr><td colspan="5" style="padding: 20px; text-align: center; color: #666;">No data tracks generated yet.</td></tr>`;
+            }
+        });
+
+        // Lock Timeline Slot Update Event
+        document.getElementById('btnScheduleManifest').addEventListener('click', () => {
+            const manifestId = manifestSelect.value;
+            const targetDate = document.getElementById('planner_execution_date').value;
+
+            if (!manifestId || !targetDate) {
+                return alert('Please specify both an open manifest pipeline and a scheduling date.');
+            }
+
+            // Perform partial object tree update directly matching booking node property targets
+            update(ref(db, `customer_requests/${manifestId}`), {
+                operational_plan_date: targetDate
+            })
+            .then(() => {
+                alert('Itinerary slot locked into logistics calendars successfully!');
+                document.getElementById('planner_execution_date').value = '';
+            })
+            .catch((err) => {
+                alert(`Scheduling operational error: ${err.message}`);
+            });
+        });
+    </script>
+</body>
+</html>
