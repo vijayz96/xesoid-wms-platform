@@ -235,3 +235,54 @@
     color: #ff7200; /* Accents the SKU name and product count text with your custom neon brand orange */
     font-weight: bold;
 }
+/* =========================================
+   MOBILE RESPONSIVE FIXES
+========================================= */
+
+@media screen and (max-width: 768px) {
+    /* Adjust Navbar and Menu */
+    .navbar {
+        padding: 20px;
+        flex-direction: column; /* Stacks logo on top of menu */
+        height: auto;
+    }
+
+    .menu ul {
+        gap: 15px;
+        margin-top: 15px;
+        flex-wrap: wrap; /* Allows menu items to wrap if they run out of space */
+        justify-content: center;
+    }
+
+    /* Adjust Main Content Area */
+    .content {
+        width: 100%; /* Takes full width instead of 60% */
+        padding: 40px 20px; /* Reduces massive desktop padding */
+    }
+
+    .content h1 {
+        font-size: 40px; /* Scales down massive text */
+        line-height: 50px;
+    }
+
+    .content p {
+        font-size: 16px;
+    }
+
+    /* Stack the Dashboard Cards vertically */
+    .cards {
+        flex-direction: column; /* Stacks cards in a column */
+        padding: 0 20px;
+        margin-top: 20px;
+        gap: 20px;
+        align-items: center; 
+    }
+
+    /* Make Cards Fluid */
+    .card, 
+    .card.recent-card {
+        width: 100%; /* Allows cards to shrink to fit the mobile screen */
+        max-width: 350px; /* Prevents them from stretching too wide on tablets */
+        height: auto; /* Allows height to expand based on text */
+    }
+}
