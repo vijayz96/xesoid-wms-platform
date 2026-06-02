@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - Active Trips Monitor</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="auth-guard.js"></script>
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon">
+                <h2 class="logo">Xesoid WMS</h2>
+            </div>
+            <div class="menu">
+                <ul>
+                    <li><a href="requests.html">RECEIVED REQUESTS</a></li>
+                    <li><a href="booking.html">BOOKING MODULE</a></li>
+                    <li><a href="planner.html">PLANNER</a></li>
+                    <li><a href="trips.html" class="active">ACTIVE TRIPS</a></li>
+                    <li><a href="analytics.html">ANALYTICS</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content">
+            <h1>Active Trips <span>Routing Monitor</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">Live fleet logistics command center. Track location checkpoints and update shipment transit status streams.</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; width: 90%; max-width: 1200px; margin: 0 auto 25px auto;">
+            <div style="background: #0d1527; border: 1px solid rgba(255,115,0,0.2); padding: 15px; border-radius: 6px; text-align: center;">
+                <div style="font-size: 11px; color: #888; text-transform: uppercase;">Total Active Runs</div>
+                <div id="metric_total" style="font-size: 24px; font-weight: bold; color: #fff; font-family: monospace; margin-top: 5px;">0</div>
+            </div>
+            <div style="background: #0d1527; border: 1px solid #ff7300; padding: 15px; border-radius: 6px; text-align: center;">
+                <div style="font-size: 11px; color: #888; text-transform: uppercase;">In-Transit Dispatched</div>
+                <div id="metric_transit" style="font-size: 24px; font-weight: bold; color: #ff7300; font-family: monospace; margin-top: 5px;">0</div>
+            </div>
+            <div style="background: #0d1527; border: 1px solid rgba(0,255,102,0.2); padding: 15px; border-radius: 6px; text-align: center;">
+                <div style="font-size: 11px; color: #888; text-transform: uppercase;">Slotted / Storage Staged</div>
+                <div id="metric_staged" style="font-size: 24px; font-weight: bold; color: #00ff66; font-family: monospace; margin-top: 5px;">0</div>
+            </div>
+        </div>
+
+        <div class="cards" id="tripsGridContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px; padding: 20px; width: 90%; max-width: 1200px; margin: 0 auto;">
+            <div style="color: #aaa; padding: 20px; text-align: center; grid-column: 1 / -1;">Establishing encrypted connection to fleet routing data...</div>
+        </div>
+
+        <div style="text-align: center; margin: 40px auto 30px auto; padding: 10px; width: 90%; max-width: 400px;">
+            <a href="main.html" style="display: block; padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,115,0,0.3); color: #ff7300; text-decoration: none; font-weight: bold; border-radius: 6px; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px;">
+                🏠 Return Back To Dashboard
+            </a>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBffzzeiU6mwm2mg1QzcXvXRs1XP1ikk-4",
+            authDomain: "xesoid-wms.firebaseapp.com",
+            databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/",
+            projectId: "xesoid-wms"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const tripsGrid = document.getElementById('tripsGridContainer');
+
+        // Telemetry Counters
+        const metricTotal = document.getElementById('metric_total');
+        const metricTransit = document.getElementById('metric_transit');
+        const metricStaged = document.getElementById('metric_staged');
+
+        // Dynamic Real-Time Stream Capture
+        onValue(ref(db, 'customer_requests'), (snapshot) => {
+            if (snapshot.exists()) {
+                tripsGrid.innerHTML = '';
+                const activeTrips = snapshot.val();
+
+                let totalCount = 0;
+                let transitCount = 0;
+                let stagedCount = 0;
+
+                Object.entries(activeTrips).forEach(([dbKey, trip]) => {
+                    totalCount++;
+                    const currentStage = trip.status || "Pending Officer Review";
+                    const checkpointLoc = trip.current_checkpoint || "Origin Warehouse Hub";
+
+                    if (currentStage === "Work Order Dispatched" || currentStage === "Outbound Clearing") transitCount++;
+                    if (currentStage === "Slotted in Storage") stagedCount++;
+
+                    // Determine active border accents contextually based on transit states
+                    let statusColor = '#ffcc00';
+                    if (currentStage === "Slotted in Storage") statusColor = '#00ff66';
+                    if (currentStage === "Work Order Dispatched") statusColor = '#ff7300';
+
+                    const tripCard = document.createElement('div');
+                    tripCard.className = 'card';
+                    tripCard.style.borderLeft = `5px solid ${statusColor}`;
+                    tripCard.style.padding = '20px';
+                    tripCard.style.display = 'flex';
+                    tripCard.style.flexDirection = 'column';
+                    tripCard.style.justify = 'space-between';
+
+                    tripCard.innerHTML = `
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                                <span style="font-family:monospace; font-size:15px; font-weight:bold; color:#fff;">MANIFEST: <span style="color:#ff7300;">${trip.tracking_code}</span></span>
+                                <span style="font-size:11px; background:rgba(255,255,255,0.05); border:1px solid ${statusColor}; color:${statusColor}; padding:2px 6px; border-radius:4px; font-weight:bold;">${currentStage.toUpperCase()}</span>
+                            </div>
+
+                            <div style="font-size:13px; color:#ccc; line-height:1.6; margin-bottom:15px;">
+                                <div><strong>🏢 Enterprise Client:</strong> ${trip.customer_name}</div>
+                                <div style="margin-top:4px;"><strong>🛣️ Assigned Routing:</strong> <span style="color:#fff; font-weight:bold;">${trip.origin}</span> ➔ <span style="color:#fff; font-weight:bold;">${trip.destination}</span></div>
+                                <div style="margin-top:4px; font-size:12px; background:rgba(0,0,0,0.2); padding:6px; border-radius:4px; border:1px dashed rgba(255,255,255,0.05);">
+                                    <span style="color:#888;">📍 Last Checkpoint Node:</span> <br>
+                                    <strong style="color:#00ff66;">${checkpointLoc}</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:12px; margin-top:10px;">
+                            <label style="color:#888; font-size:11px; display:block; margin-bottom:4px; font-weight:bold; text-transform:uppercase;">Modify Routing Milestones:</label>
+                            <div style="display:flex; flex-direction:column; gap:8px;">
+                                <input type="text" id="chk_${dbKey}" placeholder="Update Current Location/City" style="padding:6px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; font-size:12px; outline:none;">
+                                <div style="display:flex; gap:5px;">
+                                    <select id="stat_${dbKey}" style="width:65%; padding:6px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; font-size:12px; outline:none;">
+                                        <option value="Pending Officer Review" ${currentStage === 'Pending Officer Review' ? 'selected' : ''}>Pending Review</option>
+                                        <option value="Work Order Dispatched" ${currentStage === 'Work Order Dispatched' ? 'selected' : ''}>Dispatched / In-Transit</option>
+                                        <option value="Slotted in Storage" ${currentStage === 'Slotted in Storage' ? 'selected' : ''}>Slotted in Storage</option>
+                                        <option value="Outbound Clearing" ${currentStage === 'Outbound Clearing' ? 'selected' : ''}>Outbound Clearing</option>
+                                    </select>
+                                    <button class="update-trip-btn" data-key="${dbKey}" style="width:35%; background:#ff7300; color:white; border:none; font-weight:bold; border-radius:4px; cursor:pointer; font-size:11px; text-transform:uppercase;">Commit</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    tripsGrid.appendChild(tripCard);
+                });
+
+                // Set Metric Panel Counts
+                metricTotal.innerText = totalCount;
+                metricTransit.innerText = transitCount;
+                metricStaged.innerText = stagedCount;
+
+                // Dynamically intercept button action executions
+                document.querySelectorAll('.update-trip-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const targetKey = e.target.dataset.key;
+                        executeRouteManifestUpdate(targetKey);
+                    });
+                });
+
+            } else {
+                tripsGrid.innerHTML = '<div style="color: #aaa; padding: 20px; text-align: center; grid-column: 1 / -1;">No line-haul shipping requests detected inside database nodes.</div>';
+                metricTotal.innerText = '0';
+                metricTransit.innerText = '0';
+                metricStaged.innerText = '0';
+            }
+        });
+
+        // Update Routine Pipeline Callback
+        function executeRouteManifestUpdate(id) {
+            const statusSelection = document.getElementById(`stat_${id}`).value;
+            const customCheckpoint = document.getElementById(`chk_${id}`).value.trim();
+
+            let payload = { status: statusSelection };
+            
+            // Only overwrite checkpoint metrics if user populated the coordinate textfield box
+            if (customCheckpoint !== "") {
+                payload.current_checkpoint = customCheckpoint;
+            }
+
+            update(ref(db, `customer_requests/${id}`), payload)
+                .then(() => {
+                    alert('Trip telemetry configuration saved and updated successfully across network monitors!');
+                })
+                .catch((err) => {
+                    alert(`Routing Node Database Error: ${err.message}`);
+                });
+        }
+    </script>
+</body>
+</html>
