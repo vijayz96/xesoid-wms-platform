@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - Driver Gate Check-In</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="auth-guard.js"></script>
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon">
+                <h2 class="logo">Xesoid WMS</h2>
+            </div>
+            <div class="menu">
+                <ul>
+                    <li><a href="tasks-module.html">TASKS MODULE</a></li>
+                    <li><a href="driver-checkin.html" class="active">DRIVER CHECK-IN</a></li>
+                    <li><a href="driver-availability.html">FLEET AVAILABILITY</a></li>
+                    <li><a href="main.html">DASHBOARD</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content">
+            <h1>Driver Gate <span>Check-In Logs</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">Log arriving carriers, container numbers, and authorize entrance permissions into yard bays.</p>
+        </div>
+
+        <div class="cards" style="display: flex; flex-direction: column; gap: 25px; padding: 20px;">
+            
+            <div class="card" style="border-left: 4px solid #ff7300; width: 100%; max-width: 800px; margin: 0 auto;">
+                <h2 style="margin-bottom: 15px;">🚛 Register New Gate Entrance</h2>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Driver Full Name</label>
+                        <input type="text" id="gate_driver_name" placeholder="e.g., Rajesh Kumar" style="width:100%; padding:10px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                    </div>
+                    <div>
+                        <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Vehicle Registration Plate No.</label>
+                        <input type="text" id="gate_vehicle_plate" placeholder="e.g., MH-14-EU-4521" style="width:100%; padding:10px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Associated Shipping Manifest / Transporter Agency</label>
+                        <input type="text" id="gate_agency" placeholder="e.g., Inter-State Fleet Logistics / Manifest Ref" style="width:100%; padding:10px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; text-align: right;">
+                    <button id="btnGateCheckIn" style="padding: 12px 24px; background: #ff7300; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">
+                        Commit Gate Entry
+                    </button>
+                </div>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #ff7300; width: 100%; max-width: 800px; margin: 0 auto;">
+                <h2>📊 Live Gate Arrival Feed</h2>
+                <p style="color: #888; font-size: 12px; margin-bottom: 15px;">Real-time stream showcasing active vehicles inside yard boundaries.</p>
+                
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; color: #ccc;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid rgba(255,115,0,0.3); color: #fff;">
+                                <th style="padding: 10px;">Timestamp</th>
+                                <th style="padding: 10px;">Driver Operator</th>
+                                <th style="padding: 10px;">License Plate</th>
+                                <th style="padding: 10px;">Logistics Agency</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gateLogsTableBody">
+                            <tr>
+                                <td colspan="4" style="padding: 20px; text-align: center; color: #666;">Synchronizing gate ledger telemetry nodes...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBffzzeiU6mwm2mg1QzcXvXRs1XP1ikk-4",
+            authDomain: "xesoid-wms.firebaseapp.com",
+            databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/",
+            projectId: "xesoid-wms"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const tableBody = document.getElementById('gateLogsTableBody');
+
+        // Form Submission Direct Hook
+        document.getElementById('btnGateCheckIn').addEventListener('click', () => {
+            const driver = document.getElementById('gate_driver_name').value.trim();
+            const plate = document.getElementById('gate_vehicle_plate').value.trim().toUpperCase();
+            const agency = document.getElementById('gate_agency').value.trim();
+
+            if (!driver || !plate || !agency) {
+                return alert('Please populate all gate fields before processing entrance authorization.');
+            }
+
+            const gateLogRef = push(ref(db, 'fleet_gate_logs'));
+            set(gateLogRef, {
+                driver_name: driver,
+                license_plate: plate,
+                transporter: agency,
+                timestamp: Date.now()
+            })
+            .then(() => {
+                alert('Driver successfully clocked into the secure perimeter ledger.');
+                document.getElementById('gate_driver_name').value = '';
+                document.getElementById('gate_vehicle_plate').value = '';
+                document.getElementById('gate_agency').value = '';
+            })
+            .catch((err) => alert(`Database Sync Fault: ${err.message}`));
+        });
+
+        // Real-Time Table Stream Render
+        onValue(ref(db, 'fleet_gate_logs'), (snapshot) => {
+            if (snapshot.exists()) {
+                tableBody.innerHTML = '';
+                Object.entries(snapshot.val()).reverse().forEach(([key, log]) => {
+                    const timeString = new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    const row = document.createElement('tr');
+                    row.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                    row.innerHTML = `
+                        <td style="padding: 12px; font-family: monospace; color: #ff7300;">${timeString}</td>
+                        <td style="padding: 12px; font-weight: bold; color: #fff;">${log.driver_name}</td>
+                        <td style="padding: 12px; font-family: monospace;">${log.license_plate}</td>
+                        <td style="padding: 12px; color: #aaa;">${log.transporter}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                tableBody.innerHTML = `<tr><td colspan="4" style="padding: 20px; text-align: center; color: #666;">No arriving assets reported inside the terminal perimeter today.</td></tr>`;
+            }
+        });
+    </script>
+</body>
+</html>
