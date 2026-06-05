@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - Deliveries Milestone Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="auth-guard.js"></script>
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon">
+                <h2 class="logo">Xesoid WMS</h2>
+            </div>
+            <div class="menu">
+                <ul>
+                    <li><a href="deliveries.html" class="active">DELIVERIES</a></li>
+                    <li><a href="pod-dashboard.html">POD DASHBOARD</a></li>
+                    <li><a href="bulk-pod.html">BULK UPLOAD POD</a></li>
+                    <li><a href="main.html">DASHBOARD</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content">
+            <h1>Deliveries <span>Milestone Tracking</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">Monitor shipment routes, active in-transit locations, and transit milestones across destinations.</p>
+        </div>
+
+        <div class="cards" style="padding: 20px; max-width: 1000px; margin: 0 auto;">
+            
+            <div class="card" style="border-left: 4px solid #ff7300;">
+                <h2>📍 Live Waybill Delivery Pipeline</h2>
+                <p style="color: #888; font-size: 12px; margin-bottom: 15px;">Continuous database telemetry displaying cargo current distribution states.</p>
+                
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; color: #ccc;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid rgba(255,115,0,0.3); color: #fff;">
+                                <th style="padding: 10px;">Tracking Code</th>
+                                <th style="padding: 10px;">Client/Consignee</th>
+                                <th style="padding: 10px;">Destination Drop</th>
+                                <th style="padding: 10px;">Current Milestone Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="deliveriesTableBody">
+                            <tr>
+                                <td colspan="4" style="padding: 20px; text-align: center; color: #666;">Synchronizing dynamic delivery route nodes...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBffzzeiU6mwm2mg1QzcXvXRs1XP1ikk-4",
+            authDomain: "xesoid-wms.firebaseapp.com",
+            databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/",
+            projectId: "xesoid-wms"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const tBody = document.getElementById('deliveriesTableBody');
+
+        onValue(ref(db, 'customer_requests'), (snapshot) => {
+            if (snapshot.exists()) {
+                tBody.innerHTML = '';
+                Object.values(snapshot.val()).reverse().forEach((order) => {
+                    const isDelivered = order.pod_received === true;
+                    const milestoneText = isDelivered ? "Delivered at Destination" : (order.status || "In-Transit to Hub");
+                    const statusColor = isDelivered ? "#00ff66" : "#ffcc00";
+
+                    const row = document.createElement('tr');
+                    row.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                    row.innerHTML = `
+                        <td style="padding: 12px; font-family: monospace; color: #ff7300; font-weight: bold;">${order.tracking_code || 'TRK-UNKNOWN'}</td>
+                        <td style="padding: 12px; color: #fff;">${order.customer_name || 'N/A'}</td>
+                        <td style="padding: 12px;">${order.destination || 'Not Stated'}</td>
+                        <td style="padding: 12px; color: ${statusColor}; font-weight: bold;">📍 ${milestoneText}</td>
+                    `;
+                    tBody.appendChild(row);
+                });
+            } else {
+                tBody.innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: #666;">No active delivery pipelines found in database.</td></tr>';
+            }
+        });
+    </script>
+</body>
+</html>
