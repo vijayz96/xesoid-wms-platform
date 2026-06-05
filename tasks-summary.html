@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - Tasks Summary</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon"><h2 class="logo">Xesoid WMS</h2></div>
+            <div class="menu">
+                <ul>
+                    <li><a href="tasks-module.html">TASKS DASHBOARD</a></li>
+                    <li><a href="tasks-summary.html" class="active">SUMMARY PANEL</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content">
+            <h1>Workload <span>Distribution Summary</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">High-level analytical matrix monitoring floor operations velocity metrics.</p>
+        </div>
+
+        <div class="cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; padding: 20px; max-width: 1000px; margin: 0 auto;">
+            <div class="card" style="border-left: 4px solid #ff7300; text-align: center;">
+                <h3 style="color:#aaa; font-size:12px; text-transform:uppercase;">Unassigned Backlog</h3>
+                <h1 id="sum_open" style="font-size: 36px; color:#fff; font-family:monospace; margin: 10px 0;">0</h1>
+            </div>
+            <div class="card" style="border-left: 4px solid #ffcc00; text-align: center;">
+                <h3 style="color:#aaa; font-size:12px; text-transform:uppercase;">Active Floor Run</h3>
+                <h1 id="sum_assigned" style="font-size: 36px; color:#ffcc00; font-family:monospace; margin: 10px 0;">0</h1>
+            </div>
+            <div class="card" style="border-left: 4px solid #00ff66; text-align: center;">
+                <h3 style="color:#aaa; font-size:12px; text-transform:uppercase;">Archived & Cleared</h3>
+                <h1 id="sum_sent" style="font-size: 36px; color:#00ff66; font-family:monospace; margin: 10px 0;">0</h1>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin: 40px auto;">
+            <a href="tasks-module.html" style="color: #ff7300; text-decoration:none; font-weight:bold; font-size:13px; text-transform:uppercase; border: 1px solid rgba(255,115,0,0.3); padding:10px 20px; border-radius:4px; background:rgba(0,0,0,0.2);">⬅️ Back To Tasks Grid</a>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = { databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/" };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        onValue(ref(db, 'wms_tasks'), (snapshot) => {
+            let o = 0, a = 0, s = 0;
+            if (snapshot.exists()) {
+                Object.values(snapshot.val()).forEach(t => {
+                    if(t.stage === 'open') o++;
+                    else if(t.stage === 'assigned') a++;
+                    else if(t.stage === 'sent') s++;
+                });
+            }
+            document.getElementById('sum_open').innerText = o;
+            document.getElementById('sum_assigned').innerText = a;
+            document.getElementById('sum_sent').innerText = s;
+        });
+    </script>
+</body>
+</html>
