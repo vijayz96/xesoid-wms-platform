@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - POD Verification Console</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="auth-guard.js"></script>
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon"><h2 class="logo">Xesoid WMS</h2></div>
+            <div class="menu">
+                <ul>
+                    <li><a href="deliveries.html">DELIVERIES</a></li>
+                    <li><a href="pod-dashboard.html" class="active">POD DASHBOARD</a></li>
+                    <li><a href="bulk-pod.html">BULK UPLOAD POD</a></li>
+                    <li><a href="main.html">DASHBOARD</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content">
+            <h1>POD Verification <span>Status Panel</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">Audit signed verification proofs (POD), endorse client handovers, and clear freight accounts.</p>
+        </div>
+
+        <div class="cards" style="padding: 20px; max-width: 1000px; margin: 0 auto;">
+            
+            <div class="card" style="border-left: 4px solid #ff7300;">
+                <h2>📝 Signed Proof of Delivery Audit Ledger</h2>
+                <div style="overflow-x: auto; margin-top: 15px;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; color: #ccc;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid rgba(255,115,0,0.3); color: #fff;">
+                                <th style="padding: 10px;">Tracking ID</th>
+                                <th style="padding: 10px;">Client Entity</th>
+                                <th style="padding: 10px;">Verification State</th>
+                                <th style="padding: 10px; text-align: right;">Action Desk</th>
+                            </tr>
+                        </thead>
+                        <tbody id="podTableBody">
+                            <tr>
+                                <td colspan="4" style="padding: 20px; text-align: center; color: #666;">Reading POD data fields...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBffzzeiU6mwm2mg1QzcXvXRs1XP1ikk-4",
+            authDomain: "xesoid-wms.firebaseapp.com",
+            databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/",
+            projectId: "xesoid-wms"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const tbody = document.getElementById('podTableBody');
+
+        onValue(ref(db, 'customer_requests'), (snapshot) => {
+            if (snapshot.exists()) {
+                tbody.innerHTML = '';
+                Object.entries(snapshot.val()).reverse().forEach(([dbKey, order]) => {
+                    const podVerified = order.pod_received === true;
+                    const statusText = podVerified ? "📝 SIGNED & VERIFIED" : "⏳ AWAITING SIGN-OFF";
+                    const statusColor = podVerified ? "#00ff66" : "#ffcc00";
+
+                    const row = document.createElement('tr');
+                    row.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                    row.innerHTML = `
+                        <td style="padding: 12px; font-family: monospace; color: #ff7300; font-weight:bold;">${order.tracking_code}</td>
+                        <td style="padding: 12px; color: #fff;">${order.customer_name}</td>
+                        <td style="padding: 12px;"><span style="color: ${statusColor}; font-weight: bold; font-size:11px; background:rgba(255,255,255,0.02); padding:3px 6px; border:1px solid ${statusColor}33; border-radius:4px;">${statusText}</span></td>
+                        <td style="padding: 12px; text-align: right;">
+                            ${podVerified ? '<span style="color:#666; font-size:12px;">ACCOUNT CLOSED</span>' : 
+                            `<button class="verify-pod-btn" data-id="${dbKey}" style="padding: 6px 12px; background: #ff7300; color: white; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 11px; text-transform: uppercase;">Endorse POD</button>`}
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                // Attach event listeners to live generated buttons
+                document.querySelectorAll('.verify-pod-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const targetId = e.target.dataset.id;
+                        update(ref(db, `customer_requests/${targetId}`), {
+                            pod_received: true,
+                            status: "Delivered & POD Verified"
+                        })
+                        .then(() => alert('Proof of Delivery record officially verified and committed to archives!'));
+                    });
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: #666;">No tracking entries available for verification.</td></tr>';
+            }
+        });
+    </script>
+</body>
+</html>
