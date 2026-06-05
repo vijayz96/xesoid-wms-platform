@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - Product Rules</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="auth-guard.js"></script>
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon"><h2 class="logo">Xesoid WMS</h2></div>
+            <div class="menu">
+                <ul>
+                    <li><a href="sales-analytics.html">ANALYTICS</a></li>
+                    <li><a href="base-report.html">REPORTS</a></li>
+                    <li><a href="corporate-settings.html" class="active">SETTINGS</a></li>
+                    <li><a href="main.html">DASHBOARD</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="cards" style="display: grid; grid-template-columns: 250px 1fr; gap: 20px; max-width: 1000px; margin: 40px auto; padding: 20px;">
+            <div class="card" style="padding: 15px; background: #0d1527;">
+                <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px;">
+                    <li><a href="corporate-settings.html" style="display:block; padding:12px; background:#16223f; color:#ccc; border:1px solid #3d4f73; text-decoration:none; border-radius:4px;">🏢 Corporate Profile</a></li>
+                    <li><a href="customer-settings.html" style="display:block; padding:12px; background:#16223f; color:#ccc; border:1px solid #3d4f73; text-decoration:none; border-radius:4px;">👥 Default Accounts</a></li>
+                    <li><a href="products-settings.html" style="display:block; padding:12px; background:#ff7300; color:white; font-weight:bold; text-decoration:none; border-radius:4px;">📦 Product Rules</a></li>
+                    <li><a href="vendors-settings.html" style="display:block; padding:12px; background:#16223f; color:#ccc; border:1px solid #3d4f73; text-decoration:none; border-radius:4px;">🚛 Fleet Distribution</a></li>
+                </ul>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #ff7300;">
+                <h2>📦 Volumetric Calculation Variables & Dimension Rules</h2>
+                <div style="margin-top: 15px;">
+                    <label style="color:#aaa; font-size:12px;">Standard Volumetric Sorting Divisor (L×W×H / x)</label>
+                    <input type="number" id="prod_vol" placeholder="5000" style="width:100%; padding:10px; margin-top:5px; margin-bottom:15px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px;">
+                    
+                    <button onclick="updateProducts()" style="padding:10px 20px; background:#00ff66; color:black; font-weight:bold; border:none; border-radius:4px; cursor:pointer;">Update Cargo Matrix</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const app = initializeApp({ databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/" });
+        const db = getDatabase(app);
+
+        window.updateProducts = function() {
+            set(ref(db, 'wms_settings/products'), {
+                volumetric_divisor: document.getElementById('prod_vol').value
+            }).then(() => alert("Volumetric formula parameters saved successfully.")).catch(e => alert(e.message));
+        }
+
+        get(ref(db, 'wms_settings/products')).then(snap => {
+            if(snap.exists()) document.getElementById('prod_vol').value = snap.val().volumetric_divisor || '';
+        });
+    </script>
+</body>
+</html>
