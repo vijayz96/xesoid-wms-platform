@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - System Settings</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="auth-guard.js"></script>
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon"><h2 class="logo">Xesoid WMS</h2></div>
+            <div class="menu">
+                <ul>
+                    <li><a href="analytics.html">ANALYTICS</a></li>
+                    <li><a href="reports.html">REPORTS</a></li>
+                    <li><a href="settings.html" class="active">SETTINGS</a></li>
+                    <li><a href="main.html">DASHBOARD</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content">
+            <h1>System <span>Configurations</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">Edit company profiles, manage customer accounts, tweak product dimensions, and adjust vendor payout rates.</p>
+        </div>
+
+        <div class="cards" style="display: grid; grid-template-columns: 250px 1fr; gap: 20px; max-width: 1000px; margin: 0 auto; padding: 20px;">
+            
+            <div class="card" style="border-top: 4px solid #ff7300; padding: 15px;">
+                <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px;">
+                    <li><button onclick="showSetting('corporate')" class="set-btn" style="width:100%; text-align:left; padding:12px; background:#ff7300; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">🏢 Corporate Profile</button></li>
+                    <li><button onclick="showSetting('customer')" class="set-btn" style="width:100%; text-align:left; padding:12px; background:#16223f; color:#ccc; border:1px solid #3d4f73; border-radius:4px; font-weight:bold; cursor:pointer;">👥 Customer Privileges</button></li>
+                    <li><button onclick="showSetting('products')" class="set-btn" style="width:100%; text-align:left; padding:12px; background:#16223f; color:#ccc; border:1px solid #3d4f73; border-radius:4px; font-weight:bold; cursor:pointer;">📦 Standard Products</button></li>
+                    <li><button onclick="showSetting('vendors')" class="set-btn" style="width:100%; text-align:left; padding:12px; background:#16223f; color:#ccc; border:1px solid #3d4f73; border-radius:4px; font-weight:bold; cursor:pointer;">🚛 Vendor Fleets</button></li>
+                </ul>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #ff7300; min-height: 300px;">
+                
+                <div id="view_corporate" class="setting-view" style="display: block;">
+                    <h2>🏢 Edit Corporate Profile & Locations</h2>
+                    <div style="margin-top: 15px;">
+                        <label style="color:#aaa; font-size:12px;">HQ Address / Location</label>
+                        <input type="text" id="corp_loc" placeholder="e.g., Warehouse Node 1, Mumbai" style="width:100%; padding:10px; margin-top:5px; margin-bottom:15px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px;">
+                        <label style="color:#aaa; font-size:12px;">Operating Tax ID (GST/VAT)</label>
+                        <input type="text" id="corp_tax" placeholder="Registration ID" style="width:100%; padding:10px; margin-top:5px; margin-bottom:15px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px;">
+                        <button onclick="saveConfig('corporate')" style="padding:10px 20px; background:#00ff66; color:black; border:none; font-weight:bold; border-radius:4px; cursor:pointer;">Save Configuration</button>
+                    </div>
+                </div>
+
+                <div id="view_customer" class="setting-view" style="display: none;">
+                    <h2>👥 Manage Default Customer Accounts</h2>
+                    <div style="margin-top: 15px;">
+                        <label style="color:#aaa; font-size:12px;">Default Client Discount Target (%)</label>
+                        <input type="number" id="cust_disc" placeholder="10" style="width:100%; padding:10px; margin-top:5px; margin-bottom:15px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px;">
+                        <button onclick="saveConfig('customer')" style="padding:10px 20px; background:#00ff66; color:black; border:none; font-weight:bold; border-radius:4px; cursor:pointer;">Update Accounts</button>
+                    </div>
+                </div>
+
+                <div id="view_products" class="setting-view" style="display: none;">
+                    <h2>📦 Standard Weights & Dimensions</h2>
+                    <div style="margin-top: 15px;">
+                        <label style="color:#aaa; font-size:12px;">Default Volumetric Weight Divisor</label>
+                        <input type="number" id="prod_vol" placeholder="e.g., 5000" style="width:100%; padding:10px; margin-top:5px; margin-bottom:15px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px;">
+                        <button onclick="saveConfig('products')" style="padding:10px 20px; background:#00ff66; color:black; border:none; font-weight:bold; border-radius:4px; cursor:pointer;">Save Dimensions</button>
+                    </div>
+                </div>
+
+                <div id="view_vendors" class="setting-view" style="display: none;">
+                    <h2>🚛 Fleet Vendor Payment Rates</h2>
+                    <div style="margin-top: 15px;">
+                        <label style="color:#aaa; font-size:12px;">Standard Vendor Linehaul Cost Ratio (%)</label>
+                        <input type="number" id="vend_ratio" placeholder="e.g., 70" value="70" style="width:100%; padding:10px; margin-top:5px; margin-bottom:15px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px;">
+                        <button onclick="saveConfig('vendors')" style="padding:10px 20px; background:#00ff66; color:black; border:none; font-weight:bold; border-radius:4px; cursor:pointer;">Save Carrier Rates</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const app = initializeApp({ databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/" });
+        const db = getDatabase(app);
+
+        // UI View Switcher
+        window.showSetting = function(viewId) {
+            document.querySelectorAll('.setting-view').forEach(el => el.style.display = 'none');
+            document.getElementById(`view_${viewId}`).style.display = 'block';
+            
+            document.querySelectorAll('.set-btn').forEach(btn => {
+                btn.style.background = '#16223f'; btn.style.color = '#ccc'; btn.style.border = '1px solid #3d4f73';
+            });
+            event.target.style.background = '#ff7300'; event.target.style.color = 'white'; event.target.style.border = 'none';
+        }
+
+        // Database Configuration Saver
+        window.saveConfig = function(node) {
+            let payload = {};
+            if(node === 'corporate') {
+                payload = { loc: document.getElementById('corp_loc').value, tax: document.getElementById('corp_tax').value };
+            } else if (node === 'customer') {
+                payload = { default_discount: document.getElementById('cust_disc').value };
+            } else if (node === 'products') {
+                payload = { volumetric_divisor: document.getElementById('prod_vol').value };
+            } else if (node === 'vendors') {
+                payload = { standard_payout_ratio: document.getElementById('vend_ratio').value };
+            }
+
+            set(ref(db, `wms_settings/${node}`), payload)
+            .then(() => alert(`✅ ${node.toUpperCase()} configurations successfully written to server.`))
+            .catch(err => alert(`Database write error: ${err.message}`));
+        }
+
+        // Prefill existing settings on load
+        get(ref(db, 'wms_settings')).then((snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                if(data.corporate) {
+                    document.getElementById('corp_loc').value = data.corporate.loc || '';
+                    document.getElementById('corp_tax').value = data.corporate.tax || '';
+                }
+                if(data.customer) document.getElementById('cust_disc').value = data.customer.default_discount || '';
+                if(data.products) document.getElementById('prod_vol').value = data.products.volumetric_divisor || '';
+                if(data.vendors) document.getElementById('vend_ratio').value = data.vendors.standard_payout_ratio || '70';
+            }
+        });
+    </script>
+</body>
+</html>
