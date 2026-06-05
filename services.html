@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - Service Order Management</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="auth-guard.js"></script>
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon">
+                <h2 class="logo">Xesoid WMS</h2>
+            </div>
+            <div class="menu">
+                <ul>
+                    <li><a href="tasks-module.html">TASKS MODULE</a></li>
+                    <li><a href="driver-checkin.html">DRIVER REGISTRY</a></li>
+                    <li><a href="services.html" class="active">SERVICE ORDERS</a></li>
+                    <li><a href="main.html">DASHBOARD</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content">
+            <h1>Internal Service <span>& Maintenance Sheets</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">Log terminal infrastructure tasks, track active asset breakdowns, and manage internal facility work orders.</p>
+        </div>
+
+        <div class="cards" style="display: flex; flex-direction: column; gap: 25px; max-width: 900px; margin: 0 auto; padding: 20px;">
+            
+            <div class="card" style="border-left: 4px solid #ff7300;">
+                <h2>🛠️ Deploy Internal Facility Work Order</h2>
+                <p style="color: #888; font-size: 12px; margin-bottom: 15px;">Raise a new maintenance ticket for machinery calibrations, bay repairs, or IT hardware updates.</p>
+                
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
+                    <div>
+                        <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Maintenance Objective / Task Description</label>
+                        <input type="text" id="srv_task" placeholder="e.g., Forklift #3 Hydraulic Seal Leak Repair" style="width:100%; box-sizing:border-box; padding:11px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                    </div>
+                    <div>
+                        <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Priority Scope</label>
+                        <select id="srv_priority" style="width:100%; padding:11px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none; height:41px;">
+                            <option value="Routine Scope">Routine Scope</option>
+                            <option value="Urgent / High Attention">Urgent / High Attention</option>
+                            <option value="CRITICAL LINE-HALT">CRITICAL LINE-HALT</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; text-align: right;">
+                    <button id="btnCreateService" style="padding: 12px 24px; background: #ff7300; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">
+                        Deploy Order Node
+                    </button>
+                </div>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #ff7300;">
+                <h2>📋 Active Maintenance & Service Log Sheet</h2>
+                <p style="color: #888; font-size: 12px; margin-bottom: 15px;">Real-time view monitoring facility engineering status assignments.</p>
+                
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; color: #ccc;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid rgba(255,115,0,0.3); color: #fff;">
+                                <th style="padding: 10px;">Order Ref</th>
+                                <th style="padding: 10px;">Maintenance Details & Parameters</th>
+                                <th style="padding: 10px;">Priority Level</th>
+                                <th style="padding: 10px; text-align: right;">Action Desk</th>
+                            </tr>
+                        </thead>
+                        <tbody id="servicesTableBody">
+                            <tr>
+                                <td colspan="4" style="padding: 20px; text-align: center; color: #666;">Synchronizing telemetry data feeds...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, push, set, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBffzzeiU6mwm2mg1QzcXvXRs1XP1ikk-4",
+            authDomain: "xesoid-wms.firebaseapp.com",
+            databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/",
+            projectId: "xesoid-wms"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const tbody = document.getElementById('servicesTableBody');
+
+        // Form Submit Handler
+        document.getElementById('btnCreateService').addEventListener('click', () => {
+            const objective = document.getElementById('srv_task').value.trim();
+            const level = document.getElementById('srv_priority').value;
+
+            if (!objective) {
+                return alert('Please populate the task objective summary string.');
+            }
+
+            const targetRef = push(ref(db, 'wms_services'));
+            set(targetRef, {
+                desc: objective,
+                scope: level,
+                timestamp: Date.now()
+            })
+            .then(() => {
+                document.getElementById('srv_task').value = '';
+                document.getElementById('srv_priority').value = 'Routine Scope';
+            })
+            .catch((err) => alert(`Write Fault Interruption: ${err.message}`));
+        });
+
+        // Real-Time Table Synchronization
+        onValue(ref(db, 'wms_services'), (snap) => {
+            tbody.innerHTML = '';
+            if (snap.exists()) {
+                Object.entries(snap.val()).reverse().forEach(([key, item]) => {
+                    const isHalt = item.scope === "CRITICAL LINE-HALT";
+                    const isUrgent = item.scope === "Urgent / High Attention";
+                    
+                    let scopeBadgeColor = '#aaa';
+                    if (isHalt) scopeBadgeColor = '#ff3333';
+                    else if (isUrgent) scopeBadgeColor = '#ffaa00';
+
+                    const row = document.createElement('tr');
+                    row.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                    row.innerHTML = `
+                        <td style="padding: 12px; font-family: monospace; color: #ff7300; font-weight: bold;">SRV-${key.substring(0,6).toUpperCase()}</td>
+                        <td style="padding: 12px; color: #fff; font-weight: 500;">${item.desc}</td>
+                        <td style="padding: 12px; color: ${scopeBadgeColor}; font-weight: bold;">⚠️ ${item.scope}</td>
+                        <td style="padding: 12px; text-align: right;">
+                            <button class="resolve-srv-btn" data-id="${key}" style="padding: 6px 12px; background: rgba(0,255,102,0.1); border: 1px solid rgba(0,255,102,0.2); color: #00ff66; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; text-transform: uppercase;">
+                                Clear Issue
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                // Set Click Observers on Live Generated Elements
+                document.querySelectorAll('.resolve-srv-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const targetNodeId = e.target.dataset.id;
+                        remove(ref(db, `wms_services/${targetNodeId}`))
+                        .then(() => alert('Service order successfully completed, closed out, and removed from database loops.'));
+                    });
+                });
+
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: #666;">All facility equipment is running optimally. The active worksheet is currently clear.</td></tr>';
+            }
+        });
+    </script>
+</body>
+</html>
