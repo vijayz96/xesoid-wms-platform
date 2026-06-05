@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - Outbound Logistics Coordination</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon"><h2 class="logo">Xesoid WMS</h2></div>
+            <div class="menu"><ul><li><a href="wms-execute.html">WMS CONTROLS</a></li></ul></div>
+        </div>
+
+        <div class="content">
+            <h1>Outbound Cargo <span>Distribution Picking</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">Coordinate cargo clearing operations departing warehouse zones into distribution line-hauls.</p>
+        </div>
+
+        <div class="cards" style="display: flex; flex-direction: column; gap: 20px; padding: 20px; max-width: 800px; margin: 0 auto;">
+            <div class="card" style="border-left: 4px solid #ff7300;">
+                <h2>📤 Schedule Stock Removal / Picking Run</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px;">
+                    <input type="text" id="outbound_item" placeholder="Target Stock SKU Field" style="padding:10px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                    <input type="number" id="outbound_qty" placeholder="Dispatched Stock Units Qty" style="padding:10px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; outline:none;">
+                </div>
+                <div style="margin-top: 15px; text-align: right;">
+                    <button id="btnCommitOutbound" style="padding: 10px 20px; background: #ff7300; border: none; color: white; font-weight: bold; border-radius: 4px; cursor: pointer; text-transform: uppercase; font-size: 11px;">Release to Staging</button>
+                </div>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #ff7300;">
+                <h2>📋 Departing Cargo Staging Pipeline</h2>
+                <div id="outboundLogBox" style="margin-top: 15px; display: flex; flex-direction: column; gap: 8px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const app = initializeApp({ databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/" });
+        const db = getDatabase(app);
+        const container = document.getElementById('outboundLogBox');
+
+        document.getElementById('btnCommitOutbound').addEventListener('click', () => {
+            const sku = document.getElementById('outbound_item').value.trim();
+            const qty = document.getElementById('outbound_qty').value.trim();
+
+            if(!sku || !qty) return alert('Please enter both description properties and target quantities.');
+
+            const nodeRef = push(ref(db, 'wms_execute_nodes'));
+            set(nodeRef, { sku_name: sku, quantity: qty, movement_type: 'outbound', timestamp: Date.now() })
+            .then(() => {
+                document.getElementById('outbound_item').value = '';
+                document.getElementById('outbound_qty').value = '';
+            });
+        });
+
+        onValue(ref(db, 'wms_execute_nodes'), (snap) => {
+            container.innerHTML = '';
+            if(snap.exists()){
+                Object.values(snap.val()).reverse().forEach(t => {
+                    if(t.movement_type === 'outbound') {
+                        container.insertAdjacentHTML('beforeend', `
+                            <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:4px; border:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between;">
+                                <span style="color:#fff; font-size:13px;">📤 ${t.sku_name}</span>
+                                <span style="color:#ff7300; font-family:monospace; font-weight:bold;">- ${t.quantity} Pcs</span>
+                            </div>
+                        `);
+                    }
+                });
+            } else { container.innerHTML = '<div style="color:#555; text-align:center;">Outbound lane idle. No stocks queued for departure.</div>'; }
+        });
+    </script>
+</body>
+</html>
