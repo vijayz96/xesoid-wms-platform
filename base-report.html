@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - Base Report</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="auth-guard.js"></script>
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon"><h2 class="logo">Xesoid WMS</h2></div>
+            <div class="menu">
+                <ul>
+                    <li><a href="sales-analytics.html">ANALYTICS</a></li>
+                    <li><a href="base-report.html" class="active">REPORTS</a></li>
+                    <li><a href="corporate-settings.html">SETTINGS</a></li>
+                    <li><a href="main.html">DASHBOARD</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content">
+            <h1>Base <span>Report Template</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">Default standardized operational ledger reporting template.</p>
+        </div>
+
+        <div class="cards" style="max-width: 1000px; margin: 0 auto; padding: 20px;">
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <a href="base-report.html" style="padding:10px 20px; background:#ff7300; color:white; border-radius:4px; font-weight:bold; text-decoration:none;">Base Report</a>
+                <a href="my-report.html" style="padding:10px 20px; background:#16223f; color:#ccc; border:1px solid #3d4f73; border-radius:4px; font-weight:bold; text-decoration:none;">My Report</a>
+                <a href="shared-report.html" style="padding:10px 20px; background:#16223f; color:#ccc; border:1px solid #3d4f73; border-radius:4px; font-weight:bold; text-decoration:none;">Shared Report</a>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #ff7300;">
+                <h2>📋 Standard Operational Template Grid</h2>
+                <div style="overflow-x: auto; margin-top: 15px;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; color: #ccc;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid rgba(255,115,0,0.3); color: #fff;">
+                                <th style="padding: 10px;">Waybill Code</th>
+                                <th style="padding: 10px;">Customer Name</th>
+                                <th style="padding: 10px;">Destination Node</th>
+                                <th style="padding: 10px;">Quotation (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="baseReportBody">
+                            <tr><td colspan="4" style="text-align:center; padding:20px; color:#666;">Querying master metrics...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const app = initializeApp({ databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/" });
+        const db = getDatabase(app);
+
+        onValue(ref(db, 'customer_requests'), (snapshot) => {
+            const tbody = document.getElementById('baseReportBody');
+            tbody.innerHTML = '';
+            if (snapshot.exists()) {
+                Object.values(snapshot.val()).forEach(order => {
+                    const row = document.createElement('tr');
+                    row.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                    row.innerHTML = `
+                        <td style="padding:10px; font-family:monospace; color:#ff7300;">${order.tracking_code || 'N/A'}</td>
+                        <td style="padding:10px; color:#fff;">${order.customer_name || 'N/A'}</td>
+                        <td style="padding:10px;">${order.destination || 'N/A'}</td>
+                        <td style="padding:10px; font-family:monospace;">₹${Number(order.total_quotation || 0).toFixed(2)}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">No operational records found.</td></tr>';
+            }
+        });
+    </script>
+</body>
+</html>
