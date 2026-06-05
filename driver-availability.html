@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - Fleet Duty Roster</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="auth-guard.js"></script>
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon">
+                <h2 class="logo">Xesoid WMS</h2>
+            </div>
+            <div class="menu">
+                <ul>
+                    <li><a href="tasks-module.html">TASKS MODULE</a></li>
+                    <li><a href="driver-checkin.html">DRIVER CHECK-IN</a></li>
+                    <li><a href="driver-availability.html" class="active">FLEET AVAILABILITY</a></li>
+                    <li><a href="main.html">DASHBOARD</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content">
+            <h1>Personnel & Crew <span>Availability Roster</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">Roster view tracking resting drivers, active flight routes, and labor availability deployment ratios.</p>
+        </div>
+
+        <div class="cards" style="display: flex; flex-direction: column; gap: 25px; padding: 20px;">
+            
+            <div class="card" style="border-left: 4px solid #ff7300; width: 100%; max-width: 800px; margin: 0 auto;">
+                <h2 style="margin-bottom: 15px;">📋 Enroll Crew Member to Roster Pool</h2>
+                
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <input type="text" id="roster_crew_name" placeholder="Enter operator/driver name to index..." style="flex-grow: 1; padding: 12px; background: #16223f; border: 1px solid #3d4f73; color: white; border-radius: 4px; outline: none;">
+                    <button id="btnEnrollCrew" style="padding: 12px 24px; background: #ff7300; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12px; white-space: nowrap;">
+                        Add to Pool
+                    </button>
+                </div>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #ff7300; width: 100%; max-width: 800px; margin: 0 auto;">
+                <h2>👥 Live Duty Deployment Matrix</h2>
+                <p style="color: #888; font-size: 12px; margin-bottom: 20px;">Manage active standing statuses. Toggle flags instantly to feed operational schedules.</p>
+                
+                <div id="rosterGridContainer" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div style="color:#555; text-align:center; grid-column: 1 / -1; padding: 20px;">Parsing real-time operator matrix nodes...</div>
+                </div>
+            </div>
+
+        </div>
+
+        <div style="text-align: center; margin: 30px auto;">
+            <a href="main.html" style="display: inline-block; padding: 12px 24px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,115,0,0.3); color: #ff7300; text-decoration: none; font-weight: bold; border-radius: 4px; text-transform: uppercase; font-size: 12px;">
+                🏠 Return Back To Main Terminal Dashboard
+            </a>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, push, set, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBffzzeiU6mwm2mg1QzcXvXRs1XP1ikk-4",
+            authDomain: "xesoid-wms.firebaseapp.com",
+            databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/",
+            projectId: "xesoid-wms"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const rosterGrid = document.getElementById('rosterGridContainer');
+
+        // Crew Registration Routine Handler
+        document.getElementById('btnEnrollCrew').addEventListener('click', () => {
+            const workerName = document.getElementById('roster_crew_name').value.trim();
+            if (!workerName) return alert('Please enter a valid driver name to generate a roster registry block.');
+
+            const newCrewRef = push(ref(db, 'fleet_crew_roster'));
+            set(newCrewRef, {
+                name: workerName,
+                status: "Available For Run",
+                updated_at: Date.now()
+            })
+            .then(() => {
+                document.getElementById('roster_crew_name').value = '';
+            })
+            .catch((err) => alert(`Write Interruption error: ${err.message}`));
+        });
+
+        // Listen for data streams and mount grid dynamic cards
+        onValue(ref(db, 'fleet_crew_roster'), (snapshot) => {
+            if (snapshot.exists()) {
+                rosterGrid.innerHTML = '';
+                Object.entries(snapshot.val()).forEach(([nodeKey, crew]) => {
+                    const statusIsReady = crew.status === "Available For Run";
+                    const statusThemeColor = statusIsReady ? '#00ff66' : '#ff7300';
+                    const targetActionLabel = statusIsReady ? "Deploy On Transit" : "Clear Duty Lock";
+                    const nextTargetStatusValue = statusIsReady ? "On Active Transit" : "Available For Run";
+
+                    const cardNode = document.createElement('div');
+                    cardNode.style.background = 'rgba(0,0,0,0.2)';
+                    cardNode.style.border = '1px solid rgba(255,255,255,0.05)';
+                    cardNode.style.padding = '15px';
+                    cardNode.style.borderRadius = '6px';
+                    cardNode.style.display = 'flex';
+                    cardNode.style.justifyContent = 'space-between';
+                    cardNode.style.alignItems = 'center';
+
+                    cardNode.innerHTML = `
+                        <div>
+                            <div style="font-weight:bold; color:#fff; font-size:14px; margin-bottom:4px;">👤 ${crew.name}</div>
+                            <div style="font-size:11px; font-weight:bold; color:${statusThemeColor}; background:rgba(255,255,255,0.02); padding:2px 6px; border-radius:4px; display:inline-block; border:1px solid ${statusThemeColor}33;">
+                                ${crew.status.toUpperCase()}
+                            </div>
+                        </div>
+                        <button class="toggle-status-btn" data-id="${nodeKey}" data-next="${nextTargetStatusValue}" style="padding:8px 12px; background:${statusIsReady ? '#ff7300' : 'rgba(255,255,255,0.05)'}; color:${statusIsReady ? 'white' : '#aaa'}; border:${statusIsReady ? 'none' : '1px solid #3d4f73'}; font-weight:bold; font-size:11px; text-transform:uppercase; border-radius:4px; cursor:pointer;">
+                            ${targetActionLabel}
+                        </button>
+                    `;
+                    rosterGrid.appendChild(cardNode);
+                });
+
+                // Intercept dynamic buttons inside current loop
+                document.querySelectorAll('.toggle-status-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const rowId = e.currentTarget.dataset.id;
+                        const nextStatus = e.currentTarget.dataset.next;
+                        
+                        update(ref(db, `fleet_crew_roster/${rowId}`), {
+                            status: nextStatus,
+                            updated_at: Date.now()
+                        });
+                    });
+                });
+
+            } else {
+                rosterGrid.innerHTML = '<div style="color:#555; text-align:center; grid-column: 1 / -1; padding:20px;">No registered drivers found inside the active roster pool node.</div>';
+            }
+        });
+    </script>
+</body>
+</html>
