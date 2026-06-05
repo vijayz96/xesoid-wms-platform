@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - Management Analytics</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="auth-guard.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon"><h2 class="logo">Xesoid WMS</h2></div>
+            <div class="menu">
+                <ul>
+                    <li><a href="sales-analytics.html" class="active">ANALYTICS</a></li>
+                    <li><a href="reports.html">REPORTS</a></li>
+                    <li><a href="settings.html">SETTINGS</a></li>
+                    <li><a href="main.html">DASHBOARD</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content">
+            <h1>Management <span>Analytics</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">Review high-level workforce efficiency evaluations and system volume.</p>
+        </div>
+
+        <div class="cards" style="max-width: 1100px; margin: 0 auto; padding: 20px;">
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                <a href="sales-analytics.html" style="padding:10px 20px; background:#16223f; color:#ccc; border:1px solid #3d4f73; border-radius:4px; font-weight:bold; text-decoration:none;">Sales Revenue</a>
+                <a href="management-analytics.html" style="padding:10px 20px; background:#ff7300; color:white; border-radius:4px; font-weight:bold; text-decoration:none;">Management</a>
+                <a href="operations-analytics.html" style="padding:10px 20px; background:#16223f; color:#ccc; border:1px solid #3d4f73; border-radius:4px; font-weight:bold; text-decoration:none;">Operations Velocity</a>
+                <a href="finance-analytics.html" style="padding:10px 20px; background:#16223f; color:#ccc; border:1px solid #3d4f73; border-radius:4px; font-weight:bold; text-decoration:none;">Finance Margins</a>
+            </div>
+
+            <div id="metricsPanel" style="margin-bottom: 20px;">
+                <div style="background:#0d1527; padding:15px; border-radius:4px; text-align:center; border:1px solid rgba(0,170,255,0.3);">
+                    <div style="font-size:11px; color:#888;">TOTAL ORDERS MANAGED</div>
+                    <div id="totalOrders" style="font-size:24px; color:#00aaff; font-weight:bold;">0 Tickets</div>
+                </div>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #ff7300; padding: 25px;">
+                <h2>📊 Workforce Execution Volume</h2>
+                <div style="position: relative; height:400px; width:100%; margin-top: 20px;">
+                    <canvas id="mgmtChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const app = initializeApp({ databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/" });
+        const db = getDatabase(app);
+        
+        onValue(ref(db, 'customer_requests'), (snapshot) => {
+            if (snapshot.exists()) {
+                const wmsData = Object.values(snapshot.val());
+                
+                // Update Metric
+                document.getElementById('totalOrders').innerText = `${wmsData.length} Tickets`;
+
+                // Process Data for Bar Chart
+                const labels = wmsData.map(d => d.tracking_code || 'N/A').slice(-10);
+                const dataPoints = wmsData.map((d, i) => i + 1).slice(-10); // Cumulative count trend
+                
+                // Render Chart
+                const ctx = document.getElementById('mgmtChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Cumulative Task Volume',
+                            data: dataPoints,
+                            backgroundColor: 'rgba(0, 170, 255, 0.5)',
+                            borderColor: '#00aaff',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { grid: { color: 'rgba(255,255,255,0.05)' } } }, plugins: { legend: { labels: { color: '#ccc' } } } }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
