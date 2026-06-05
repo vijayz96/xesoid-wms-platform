@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - Bulk POD Upload Terminal</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="auth-guard.js"></script>
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon"><h2 class="logo">Xesoid WMS</h2></div>
+            <div class="menu">
+                <ul>
+                    <li><a href="deliveries.html">DELIVERIES</a></li>
+                    <li><a href="pod-dashboard.html">POD DASHBOARD</a></li>
+                    <li><a href="bulk-pod.html" class="active">BULK UPLOAD POD</a></li>
+                    <li><a href="main.html">DASHBOARD</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content">
+            <h1>Bulk Batch Upload <span>POD Receipts</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">Process massive runs of signed waybill handovers simultaneously using automated batch input logs.</p>
+        </div>
+
+        <div class="cards" style="padding: 20px; max-width: 700px; margin: 0 auto;">
+            
+            <div class="card" style="border-left: 4px solid #ff7300; text-align: center;">
+                <h2>🗂️ Simulated Batch Upload File System</h2>
+                <p style="color: #888; font-size: 12px; margin-bottom: 20px;">Provide tracking codes separated by commas to clear systemic delivery status loops instantly.</p>
+                
+                <div style="text-align: left; margin-bottom: 15px;">
+                    <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Enter Comma-Separated Tracking IDs</label>
+                    <input type="text" id="bulkTrackingInput" placeholder="e.g., XESD9302, XESD4810, XESD1102" style="width: 100%; box-sizing: border-box; padding: 12px; background: #16223f; border: 1px solid #3d4f73; color: white; border-radius: 4px; font-family: monospace; font-size: 14px; outline: none;">
+                </div>
+
+                <button id="btnExecuteBulkUpload" style="width: 100%; padding: 12px; background: #00ff66; color: black; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">
+                    Deploy Bulk Verification Stream
+                </button>
+
+                <div id="bulkProcessingFeedback" style="margin-top: 20px; padding: 15px; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px dashed #3d4f73; color: #888; font-family: monospace; font-size: 12px; text-align: left; min-height: 40px;">
+                    [System idle. Ready to parse incoming batch tracking operations...]
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBffzzeiU6mwm2mg1QzcXvXRs1XP1ikk-4",
+            authDomain: "xesoid-wms.firebaseapp.com",
+            databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/",
+            projectId: "xesoid-wms"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const feedback = document.getElementById('bulkProcessingFeedback');
+
+        document.getElementById('btnExecuteBulkUpload').addEventListener('click', () => {
+            const rawInput = document.getElementById('bulkTrackingInput').value.trim();
+            if (!rawInput) {
+                feedback.style.color = '#ff3333';
+                feedback.innerText = "❌ ERROR: EXECUTED EMPTY VALUE RUN. BATCH REJECTED.";
+                return;
+            }
+
+            // Convert string block into clean array mapping loops
+            const targetedCodes = rawInput.split(',').map(code => code.trim().toUpperCase());
+            feedback.style.color = '#ffcc00';
+            feedback.innerHTML = `⏳ Interrogating active node pathways for target codes [${targetedCodes.join(', ')}]...`;
+
+            // Pull current snapshot records once to compile combined payload update
+            onValue(ref(db, 'customer_requests'), (snapshot) => {
+                if (snapshot.exists()) {
+                    let compiledUpdatesBatch = {};
+                    let matchedCount = 0;
+
+                    Object.entries(snapshot.val()).forEach(([dbKey, order]) => {
+                        if (targetedCodes.includes(order.tracking_code)) {
+                            compiledUpdatesBatch[`customer_requests/${dbKey}/pod_received`] = true;
+                            compiledUpdatesBatch[`customer_requests/${dbKey}/status`] = "Delivered & POD Verified";
+                            matchedCount++;
+                        }
+                    });
+
+                    if (matchedCount > 0) {
+                        // Apply transactional database execution tree updates
+                        update(ref(db), compiledUpdatesBatch)
+                        .then(() => {
+                            feedback.style.color = '#00ff66';
+                            feedback.innerHTML = `✅ BATCH PIPELINE SUCCESSFUL!<br>Successfully identified and resolved ${matchedCount} matched shipment records across database nodes.`;
+                            document.getElementById('bulkTrackingInput').value = '';
+                        })
+                        .catch((err) => {
+                            feedback.style.color = '#ff3333';
+                            feedback.innerText = `❌ TRANSACTION TERMINATION FAULT: ${err.message}`;
+                        });
+                    } else {
+                        feedback.style.color = '#ff3333';
+                        feedback.innerText = "❌ INVALID RUN: Zero database items matched your entered tracking ID elements.";
+                    }
+                } else {
+                    feedback.style.color = '#ff3333';
+                    feedback.innerText = "❌ DATABASE EMPTY: No underlying records found inside targeted cluster directories.";
+                }
+            }, { onlyOnce: true });
+        });
+    </script>
+</body>
+</html>
