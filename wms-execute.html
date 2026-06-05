@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - WMS Core Execution</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="auth-guard.js"></script>
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon">
+                <h2 class="logo">Xesoid WMS</h2>
+            </div>
+            <div class="menu">
+                <ul>
+                    <li><a href="tasks-module.html">TASKS MODULE</a></li>
+                    <li><a href="driver-checkin.html">DRIVER REGISTRY</a></li>
+                    <li><a href="wms-execute.html" class="active">EXECUTE (WMS)</a></li>
+                    <li><a href="analytics.html">ANALYTICS</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content">
+            <h1>Warehouse Floor <span>Execution Centre</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">Manage high-velocity inventory arrivals, coordinate outbound picking distributions, scan labels, and clear line-haul slots.</p>
+        </div>
+
+        <div class="cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; padding: 20px; max-width: 1200px; margin: 0 auto;">
+            
+            <div class="card" style="border-top: 4px solid #ff7300; display: flex; flex-direction: column; justify-content: space-between; min-height: 200px;">
+                <div>
+                    <h2>📥 Inbound Page</h2>
+                    <p style="color: #888; font-size: 12px; margin-bottom: 15px;">Process and manage incoming freight arrivals at the loading dock gates.</p>
+                </div>
+                <a href="wms-inbound.html" style="display: block; text-align: center; padding: 10px; background: #ff7300; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px; text-transform: uppercase;">Manage Dock Arrivals</a>
+            </div>
+
+            <div class="card" style="border-top: 4px solid #ff7300; display: flex; flex-direction: column; justify-content: space-between; min-height: 200px;">
+                <div>
+                    <h2>📤 Outbound Page</h2>
+                    <p style="color: #888; font-size: 12px; margin-bottom: 15px;">Coordinate picking profiles and cargo departing the facility for target hub distribution.</p>
+                </div>
+                <a href="wms-outbound.html" style="display: block; text-align: center; padding: 10px; background: #ff7300; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px; text-transform: uppercase;">Route Departures</a>
+            </div>
+
+            <div class="card" style="border-top: 4px solid #ff7300; display: flex; flex-direction: column; justify-content: space-between; min-height: 200px;">
+                <div>
+                    <h2>🏷️ Barcode Scanning Page</h2>
+                    <p style="color: #888; font-size: 12px; margin-bottom: 15px;">Interactive warehouse simulation terminal evaluating barcode docket validations.</p>
+                </div>
+                <a href="wms-scanning.html" style="display: block; text-align: center; padding: 10px; background: #ff7300; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px; text-transform: uppercase;">Launch Scanner Console</a>
+            </div>
+
+            <div class="card" style="border-top: 4px solid #ff7300; display: flex; flex-direction: column; justify-content: space-between; min-height: 200px;">
+                <div>
+                    <h2>🚚 Dispatch Operations</h2>
+                    <p style="color: #888; font-size: 12px; margin-bottom: 15px;">The final tactical clearing station for locking down shipping packages and cross-dock routes.</p>
+                </div>
+                <a href="wms-dispatch.html" style="display: block; text-align: center; padding: 10px; background: #ff7300; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px; text-transform: uppercase;">Run Clearing Desk</a>
+            </div>
+
+        </div>
+
+        <div style="text-align: center; margin: 50px auto 30px auto; padding: 10px; width: 90%; max-width: 400px;">
+            <a href="main.html" style="display: block; padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,115,0,0.3); color: #ff7300; text-decoration: none; font-weight: bold; border-radius: 6px; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px;">
+                🏠 Return Back To Dashboard
+            </a>
+        </div>
+    </div>
+</body>
+</html>
