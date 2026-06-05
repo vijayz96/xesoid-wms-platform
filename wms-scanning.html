@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - Barcode Verification Station</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon"><h2 class="logo">Xesoid WMS</h2></div>
+            <div class="menu"><ul><li><a href="wms-execute.html">WMS CONTROLS</a></li></ul></div>
+        </div>
+
+        <div class="content">
+            <h1>Docket Barcode <span>Scanning Validation</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">Interactive processing terminal verifying docket tags across regional cargo networks.</p>
+        </div>
+
+        <div class="cards" style="max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div class="card" style="border-left: 4px solid #ff7300; text-align: center;">
+                <h2>🏷️ Laser Terminal Scanner Simulation</h2>
+                <p style="color:#888; font-size:12px; margin-bottom:20px;">Simulate a handheld barcode scanner run by keying in or submitting an SKU docket label string.</p>
+                
+                <input type="text" id="barcode_input" placeholder="Scan/Input Tracking Code or SKU ID..." style="width:100%; box-sizing:border-box; padding:12px; background:#16223f; border:1px solid #3d4f73; color:white; border-radius:4px; text-align:center; font-family:monospace; font-size:16px; outline:none; margin-bottom:15px;">
+                
+                <button id="btnSimulateScan" style="width:100%; padding:12px; background:#00ff66; color:black; border:none; font-weight:bold; border-radius:4px; cursor:pointer; text-transform:uppercase; font-size:12px; letter-spacing:0.5px;">
+                    Trigger Laser Scan Beam
+                </button>
+
+                <div id="scanFeedback" style="margin-top:20px; padding:15px; border-radius:4px; background:rgba(0,0,0,0.3); border:1px dashed #3d4f73; min-height:40px; color:#aaa; font-size:13px; font-family:monospace;">
+                    [Awaiting tracking data feed insertion...]
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const app = initializeApp({ databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/" });
+        const db = getDatabase(app);
+        const feedback = document.getElementById('scanFeedback');
+
+        document.getElementById('btnSimulateScan').addEventListener('click', () => {
+            const rawCode = document.getElementById('barcode_input').value.trim().toUpperCase();
+            
+            if(!rawCode) {
+                feedback.style.color = '#ff3333';
+                feedback.innerText = "❌ ERROR: EMPTY SIGNAL SCANNER EXECUTED.";
+                return;
+            }
+
+            feedback.style.color = '#00ff66';
+            feedback.innerHTML = `⏳ VALIDATING CODE: ${rawCode}...`;
+
+            // Process entry logs into systemic audit registries
+            const logRef = push(ref(db, 'wms_scanned_barcodes'));
+            set(logRef, { code: rawCode, scanned_at: Date.now() })
+            .then(() => {
+                setTimeout(() => {
+                    feedback.innerHTML = `✅ DOCKET CAPTURED SUCCESSFULLY!<br><span style="color:#fff;">Node Registry: ${rawCode} authenticated and committed to database pipelines.</span>`;
+                    document.getElementById('barcode_input').value = '';
+                }, 750);
+            })
+            .catch((err) => {
+                feedback.style.color = '#ff3333';
+                feedback.innerText = `❌ SYSTEM FAULT: ${err.message}`;
+            });
+        });
+    </script>
+</body>
+</html>
