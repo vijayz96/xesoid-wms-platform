@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - Financial Accounting Engine</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="auth-guard.js"></script>
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon">
+                <h2 class="logo">Xesoid WMS</h2>
+            </div>
+            <div class="menu">
+                <ul>
+                    <li><a href="tasks-module.html">TASKS MODULE</a></li>
+                    <li><a href="driver-checkin.html">DRIVER REGISTRY</a></li>
+                    <li><a href="invoices.html" class="active">FINANCIAL ENGINE</a></li>
+                    <li><a href="main.html">DASHBOARD</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content">
+            <h1>Logistics ERP <span>Financial Ledger</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">Review customer statement invoice collections, inspect carrier vendor payables, and track automatic balancing margins.</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; max-width:1000px; margin: 0 auto 25px auto; padding: 0 20px;">
+            <div style="background: #0d1527; border: 1px solid rgba(0,255,102,0.2); padding: 20px; border-radius: 6px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                <div style="font-size: 11px; color: #888; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Customer Invoicing (Receivables)</div>
+                <div id="recon_income" style="font-size: 26px; font-weight: bold; color: #00ff66; font-family: monospace; margin-top: 8px;">₹0.00</div>
+            </div>
+            <div style="background: #0d1527; border: 1px solid rgba(255,51,51,0.2); padding: 20px; border-radius: 6px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                <div style="font-size: 11px; color: #888; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Vendor Settlements (Payables)</div>
+                <div id="recon_expense" style="font-size: 26px; font-weight: bold; color: #ff3333; font-family: monospace; margin-top: 8px;">₹0.00</div>
+            </div>
+            <div style="background: #0d1527; border: 1px solid #ff7300; padding: 20px; border-radius: 6px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                <div style="font-size: 11px; color: #ff7300; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Net Reconciled Balance Profit</div>
+                <div id="recon_net" style="font-size: 26px; font-weight: bold; color: #fff; font-family: monospace; margin-top: 8px;">₹0.00</div>
+            </div>
+        </div>
+
+        <div class="cards" style="display: flex; flex-direction: column; gap: 25px; max-width: 1000px; margin: 0 auto; padding: 20px;">
+            
+            <div class="card" style="border-left: 4px solid #ff7300;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:15px; flex-wrap: wrap; gap: 10px;">
+                    <h2 id="ledgerTitle" style="margin:0;">📋 Customer Statement Invoice Matrix</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="tabCustomer" onclick="switchFinancialView('customer')" style="padding:8px 16px; background:#ff7300; border:none; color:white; font-weight:bold; border-radius:4px; cursor:pointer; font-size:11px; text-transform:uppercase; transition: 0.2s;">
+                            Customer Invoices
+                        </button>
+                        <button id="tabVendor" onclick="switchFinancialView('vendor')" style="padding:8px 16px; background:#16223f; border:1px solid #3d4f73; color:#ccc; font-weight:bold; border-radius:4px; cursor:pointer; font-size:11px; text-transform:uppercase; transition: 0.2s;">
+                            Vendor Payables
+                        </button>
+                    </div>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; color: #ccc;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid rgba(255,115,0,0.3); color: #fff;" id="tableHeaderRow">
+                                <th style="padding: 10px;">Billing Ref</th>
+                                <th style="padding: 10px;">Target Entity / Client Name</th>
+                                <th style="padding: 10px;">Logistics Waybill Reference</th>
+                                <th style="padding: 10px; text-align: right;">Financial Valuation Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoiceLedgerTableBody">
+                            <tr>
+                                <td colspan="4" style="padding: 20px; text-align: center; color: #666;">Parsing financial asset ledger arrays...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBffzzeiU6mwm2mg1QzcXvXRs1XP1ikk-4",
+            authDomain: "xesoid-wms.firebaseapp.com",
+            databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/",
+            projectId: "xesoid-wms"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        
+        const tbody = document.getElementById('invoiceLedgerTableBody');
+        const headerRow = document.getElementById('tableHeaderRow');
+        const titleText = document.getElementById('ledgerTitle');
+        const btnCust = document.getElementById('tabCustomer');
+        const btnVend = document.getElementById('tabVendor');
+
+        let dataCache = {};
+        let currentSubPage = 'customer'; // Layout controller flag
+
+        // Establish connection stream with orders data node
+        onValue(ref(db, 'customer_requests'), (snapshot) => {
+            if (snapshot.exists()) {
+                dataCache = snapshot.val();
+                processFinancialMath();
+            } else {
+                tbody.innerHTML = `<tr><td colspan="4" style="padding:20px; text-align:center; color:#555;">No systemic transactional entries detected.</td></tr>`;
+            }
+        });
+
+        function processFinancialMath() {
+            tbody.innerHTML = '';
+            let totalIncome = 0;
+            let totalExpense = 0;
+
+            Object.entries(dataCache).reverse().forEach(([key, order]) => {
+                const calculatedReceivable = Number(order.total_quotation || 0);
+                // System extracts a 70% distribution cost towards hired fleet equipment linehauls
+                const calculatedPayable = calculatedReceivable * 0.70; 
+
+                totalIncome += calculatedReceivable;
+                totalExpense += calculatedPayable;
+
+                const row = document.createElement('tr');
+                row.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+
+                if (currentSubPage === 'customer') {
+                    row.innerHTML = `
+                        <td style="padding:12px; font-family:monospace; color:#ff7300; font-weight:bold;">INV-${key.substring(0,6).toUpperCase()}</td>
+                        <td style="padding:12px; color:#fff; font-weight:500;">${order.customer_name || 'Walking Customer'}</td>
+                        <td style="padding:12px; font-family:monospace;">${order.tracking_code || 'N/A'}</td>
+                        <td style="padding:12px; text-align:right; color:#00ff66; font-family:monospace; font-weight:bold;">+ ₹${calculatedReceivable.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    `;
+                } else {
+                    row.innerHTML = `
+                        <td style="padding:12px; font-family:monospace; color:#ff3333; font-weight:bold;">SET-${key.substring(0,6).toUpperCase()}</td>
+                        <td style="padding:12px; color:#fff; font-weight:500;">Third-Party Logistics Carrier Partner</td>
+                        <td style="padding:12px; font-family:monospace;">${order.tracking_code || 'N/A'}</td>
+                        <td style="padding:12px; text-align:right; color:#ff3333; font-family:monospace; font-weight:bold;">- ₹${calculatedPayable.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    `;
+                }
+                tbody.appendChild(row);
+            });
+
+            // Refresh analytical balance overview panels
+            document.getElementById('recon_income').innerText = `₹${totalIncome.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('recon_expense').innerText = `₹${totalExpense.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            
+            const netMargin = totalIncome - totalExpense;
+            const netDisplay = document.getElementById('recon_net');
+            netDisplay.innerText = `₹${netMargin.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            netDisplay.style.color = netMargin >= 0 ? '#00ff66' : '#ff3333';
+        }
+
+        // Sub-page switch navigation interceptor
+        window.switchFinancialView = function(viewMode) {
+            currentSubPage = viewMode;
+            
+            if (viewMode === 'customer') {
+                titleText.innerText = "📋 Customer Statement Invoice Matrix";
+                headerRow.innerHTML = `
+                    <th style="padding:10px;">Billing Ref</th>
+                    <th style="padding:10px;">Target Entity / Client Name</th>
+                    <th style="padding:10px;">Logistics Waybill Reference</th>
+                    <th style="padding:10px; text-align:right;">Financial Valuation Amount</th>
+                `;
+                // Button Styling Swap
+                btnCust.style.background = '#ff7300'; btnCust.style.color = '#fff'; btnCust.style.border = 'none';
+                btnVend.style.background = '#16223f'; btnVend.style.color = '#ccc'; btnVend.style.border = '1px solid #3d4f73';
+            } else {
+                titleText.innerText = "📋 Vendor Settlement Statement Ledgers";
+                headerRow.innerHTML = `
+                    <th style="padding:10px;">Settlement Ref</th>
+                    <th style="padding:10px;">Carrier Transport Agency Partner</th>
+                    <th style="padding:10px;">Logistics Waybill Reference</th>
+                    <th style="padding:10px; text-align:right;">Contract Charter Outbound Cost</th>
+                `;
+                // Button Styling Swap
+                btnVend.style.background = '#ff7300'; btnVend.style.color = '#fff'; btnVend.style.border = 'none';
+                btnCust.style.background = '#16223f'; btnCust.style.color = '#ccc'; btnCust.style.border = '1px solid #3d4f73';
+            }
+            processFinancialMath();
+        }
+    </script>
+</body>
+</html>
