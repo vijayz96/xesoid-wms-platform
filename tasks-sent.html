@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - Sent Task Archives</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon"><h2 class="logo">Xesoid WMS</h2></div>
+            <div class="menu"><ul><li><a href="tasks-module.html">TASKS MODULE</a></li></ul></div>
+        </div>
+
+        <div class="content">
+            <h1>Sent Tasks <span>Historical Log</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">Historical verification matrix displaying finalized warehouse actions and movements.</p>
+        </div>
+
+        <div class="cards" style="max-width: 800px; margin: 0 auto; padding: 20px;">
+            <div class="card" style="border-left: 4px solid #00ff66;">
+                <h2>📜 Archive Manifest Ledgers</h2>
+                <div style="overflow-x: auto; margin-top:15px;">
+                    <table style="width:100%; border-collapse:collapse; text-align:left; font-size:13px; color:#ccc;">
+                        <thead>
+                            <tr style="border-bottom:2px solid rgba(0,255,102,0.3); color:#fff;">
+                                <th style="padding:8px;">Task Registry ID</th>
+                                <th style="padding:8px;">Operational Objective</th>
+                                <th style="padding:8px; text-align:right;">Resolution Node</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sentTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin: 30px auto;"><a href="tasks-module.html" style="color: #ff7300; text-decoration:none; font-weight:bold; font-size:13px; text-transform:uppercase;">⬅️ Return</a></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const app = initializeApp({ databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/" });
+        const db = getDatabase(app);
+        const tbody = document.getElementById('sentTableBody');
+
+        onValue(ref(db, 'wms_tasks'), (snap) => {
+            tbody.innerHTML = '';
+            if(snap.exists()){
+                let hasHistory = false;
+                Object.entries(snap.val()).forEach(([k, t]) => {
+                    if(t.stage === 'sent') {
+                        hasHistory = true;
+                        tbody.insertAdjacentHTML('beforeend', `
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                <td style="padding:10px; font-family:monospace; color:#ff7300;">${k.substring(0,8)}</td>
+                                <td style="padding:10px; color:#fff;">${t.desc}</td>
+                                <td style="padding:10px; text-align:right;"><span style="color:#00ff66; font-weight:bold; background:rgba(0,255,102,0.1); padding:2px 6px; border-radius:3px; font-size:11px;">CLEARED</span></td>
+                            </tr>
+                        `);
+                    }
+                });
+                if(!hasHistory) tbody.innerHTML = '<tr><td colspan="3" style="padding:15px; text-align:center; color:#555;">No work logs exported to history yet.</td></tr>';
+            } else { tbody.innerHTML = '<tr><td colspan="3" style="padding:15px; text-align:center; color:#555;">No records located inside cluster logs.</td></tr>'; }
+        });
+    </script>
+</body>
+</html>
