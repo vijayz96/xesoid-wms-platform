@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - Vendor Settlements</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="auth-guard.js"></script>
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon"><h2 class="logo">Xesoid WMS</h2></div>
+            <div class="menu">
+                <ul>
+                    <li><a href="invoices.html">FINANCIAL LEDGER</a></li>
+                    <li><a href="customer-invoices.html">CUSTOMER INVOICES</a></li>
+                    <li><a href="vendor-payables.html" class="active">VENDOR PAYABLES</a></li>
+                    <li><a href="main.html">DASHBOARD</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content">
+            <h1>Vendor Payables <span>& Settlements</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">Track systemic expenditure distributions owed to fleet transport providers and third-party fulfillment contractors.</p>
+        </div>
+
+        <div class="cards" style="max-width: 1000px; margin: 0 auto; padding: 20px;">
+            <div class="card" style="border-left: 4px solid #ff7300;">
+                <h2>📋 Outbound Liabilities Ledger</h2>
+                <div style="overflow-x: auto; margin-top: 15px;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; color: #ccc;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid rgba(255,115,0,0.3); color: #fff;">
+                                <th style="padding: 10px;">Settlement Ref</th>
+                                <th style="padding: 10px;">Carrier Transit Partner</th>
+                                <th style="padding: 10px;">Waybill Code</th>
+                                <th style="padding: 10px; text-align: right;">Contract Cost Outbound</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vendorTableBody">
+                            <tr>
+                                <td colspan="4" style="padding: 20px; text-align: center; color: #666;">Calculating outbound pipeline expense margins...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const app = initializeApp({ databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/" });
+        const db = getDatabase(app);
+        const tbody = document.getElementById('vendorTableBody');
+
+        onValue(ref(db, 'customer_requests'), (snapshot) => {
+            if (snapshot.exists()) {
+                tbody.innerHTML = '';
+                Object.entries(snapshot.val()).reverse().forEach(([key, order]) => {
+                    const vendorCost = Number(order.total_quotation || 0) * 0.70;
+                    const row = document.createElement('tr');
+                    row.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                    row.innerHTML = `
+                        <td style="padding:12px; font-family:monospace; color:#ff3333; font-weight:bold;">SET-${key.substring(0,6).toUpperCase()}</td>
+                        <td style="padding:12px; color:#fff; font-weight:500;">Third-Party Carrier Linehaul Fleet</td>
+                        <td style="padding:12px; font-family:monospace;">${order.tracking_code || 'N/A'}</td>
+                        <td style="padding:12px; text-align:right; color:#ff3333; font-family:monospace; font-weight:bold;">- ₹${vendorCost.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" style="padding:20px; text-align:center; color:#555;">No outstanding vendor payables tracked. Ledger balanced.</td></tr>';
+            }
+        });
+    </script>
+</body>
+</html>
