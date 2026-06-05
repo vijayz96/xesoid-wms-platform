@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - Master Analytics</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="auth-guard.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon"><h2 class="logo">Xesoid WMS</h2></div>
+            <div class="menu">
+                <ul>
+                    <li><a href="analytics.html" class="active">ANALYTICS</a></li>
+                    <li><a href="reports.html">REPORTS</a></li>
+                    <li><a href="settings.html">SETTINGS</a></li>
+                    <li><a href="main.html">DASHBOARD</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content">
+            <h1>Master <span>Analytics Console</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">Process database data into visual reports for sales, management, operations, and finance.</p>
+        </div>
+
+        <div class="cards" style="max-width: 1100px; margin: 0 auto; padding: 20px;">
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                <button onclick="switchTab('sales')" class="tab-btn active-tab" style="padding:10px 20px; background:#ff7300; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Sales Revenue</button>
+                <button onclick="switchTab('management')" class="tab-btn" style="padding:10px 20px; background:#16223f; color:#ccc; border:1px solid #3d4f73; border-radius:4px; font-weight:bold; cursor:pointer;">Management</button>
+                <button onclick="switchTab('operations')" class="tab-btn" style="padding:10px 20px; background:#16223f; color:#ccc; border:1px solid #3d4f73; border-radius:4px; font-weight:bold; cursor:pointer;">Operations Velocity</button>
+                <button onclick="switchTab('finance')" class="tab-btn" style="padding:10px 20px; background:#16223f; color:#ccc; border:1px solid #3d4f73; border-radius:4px; font-weight:bold; cursor:pointer;">Finance Margins</button>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #ff7300; padding: 25px;">
+                <h2 id="chartTitle">📈 Revenue Progress Tracking</h2>
+                <div style="position: relative; height:400px; width:100%; margin-top: 20px;">
+                    <canvas id="masterChart"></canvas>
+                </div>
+            </div>
+
+            <div id="metricsPanel" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px;">
+                </div>
+
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const app = initializeApp({ databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/" });
+        const db = getDatabase(app);
+        
+        let wmsData = [];
+        let chartInstance = null;
+        let currentTab = 'sales';
+
+        // Fetch live metrics
+        onValue(ref(db, 'customer_requests'), (snapshot) => {
+            if (snapshot.exists()) {
+                wmsData = Object.values(snapshot.val());
+                renderView(currentTab);
+            }
+        });
+
+        window.switchTab = function(tabName) {
+            currentTab = tabName;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.style.background = '#16223f'; btn.style.color = '#ccc'; btn.style.border = '1px solid #3d4f73';
+            });
+            event.target.style.background = '#ff7300'; event.target.style.color = 'white'; event.target.style.border = 'none';
+            renderView(tabName);
+        }
+
+        function renderView(tab) {
+            const ctx = document.getElementById('masterChart').getContext('2d');
+            if(chartInstance) chartInstance.destroy();
+
+            let labels = wmsData.map(d => d.tracking_code || 'N/A').slice(-10); // Last 10 orders
+            let dataPoints = [];
+            let chartType = 'line';
+            let title = '';
+            let color = '#ff7300';
+
+            const metricsPanel = document.getElementById('metricsPanel');
+
+            if(tab === 'sales') {
+                title = 'Sales Revenue Progress';
+                dataPoints = wmsData.map(d => Number(d.total_quotation || 0)).slice(-10);
+                const totalSales = wmsData.reduce((acc, curr) => acc + Number(curr.total_quotation || 0), 0);
+                metricsPanel.innerHTML = `<div style="background:#0d1527; padding:15px; border-radius:4px; text-align:center; border:1px solid rgba(0,255,102,0.3);"><div style="font-size:11px; color:#888;">LIFETIME GROSS REVENUE</div><div style="font-size:24px; color:#00ff66; font-weight:bold;">₹${totalSales.toLocaleString()}</div></div>`;
+            } 
+            else if(tab === 'management') {
+                title = 'Workforce Execution Volume';
+                chartType = 'bar';
+                dataPoints = wmsData.map((d, i) => i + 1).slice(-10); // Cumulative tasks handled
+                color = '#00aaff';
+                metricsPanel.innerHTML = `<div style="background:#0d1527; padding:15px; border-radius:4px; text-align:center; border:1px solid rgba(0,170,255,0.3);"><div style="font-size:11px; color:#888;">TOTAL ORDERS MANAGED</div><div style="font-size:24px; color:#00aaff; font-weight:bold;">${wmsData.length} Tickets</div></div>`;
+            }
+            else if(tab === 'operations') {
+                title = 'Cargo Processing Velocity (Delivered vs Transit)';
+                chartType = 'doughnut';
+                const deliveredCount = wmsData.filter(d => d.pod_received).length;
+                const transitCount = wmsData.length - deliveredCount;
+                labels = ['Delivered Safely', 'In Transit / Pending'];
+                dataPoints = [deliveredCount, transitCount];
+                metricsPanel.innerHTML = `<div style="background:#0d1527; padding:15px; border-radius:4px; text-align:center; border:1px solid #ffcc00;"><div style="font-size:11px; color:#888;">DELIVERY SUCCESS RATE</div><div style="font-size:24px; color:#ffcc00; font-weight:bold;">${((deliveredCount/wmsData.length)*100).toFixed(1)}%</div></div>`;
+            }
+            else if(tab === 'finance') {
+                title = 'Net Profit Margins (Income vs 70% Expense)';
+                chartType = 'bar';
+                const gross = wmsData.map(d => Number(d.total_quotation || 0)).slice(-10);
+                const expense = gross.map(v => v * 0.7);
+                const net = gross.map(v => v * 0.3);
+                
+                chartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            { label: 'Gross Revenue', data: gross, backgroundColor: '#00ff66' },
+                            { label: 'Vendor Expense', data: expense, backgroundColor: '#ff3333' },
+                            { label: 'Net Profit', data: net, backgroundColor: '#ff7300' }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: {color: 'rgba(255,255,255,0.1)'} }, x: { grid: {color: 'rgba(255,255,255,0.1)'}} }, plugins:{ legend: {labels: {color:'white'}} } }
+                });
+                document.getElementById('chartTitle').innerText = `📈 ${title}`;
+                metricsPanel.innerHTML = ''; // Handled by chart visually
+                return; // Exit early for multi-dataset
+            }
+
+            document.getElementById('chartTitle').innerText = `📈 ${title}`;
+            
+            // Standard Chart Config
+            chartInstance = new Chart(ctx, {
+                type: chartType,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: title,
+                        data: dataPoints,
+                        borderColor: color,
+                        backgroundColor: chartType === 'doughnut' ? ['#00ff66', '#ffcc00'] : color + '33',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: chartType !== 'doughnut' ? {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' } }
+                    } : {},
+                    plugins: { legend: { labels: { color: '#ccc' } } }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
