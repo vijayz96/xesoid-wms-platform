@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xesoid WMS - Shared Report Export</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="auth-guard.js"></script>
+    <style>
+        @media print {
+            body { background: #fff !important; color: #000 !important; }
+            .navbar, .nav-tabs, .btn-trigger { display: none !important; }
+            .card { border: 1px solid #ccc !important; box-shadow: none !important; background: transparent !important; }
+            th, td { color: #000 !important; border-bottom: 1px solid #ddd !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <div class="navbar">
+            <div class="icon"><h2 class="logo">Xesoid WMS</h2></div>
+            <div class="menu">
+                <ul>
+                    <li><a href="sales-analytics.html">ANALYTICS</a></li>
+                    <li><a href="base-report.html" class="active">REPORTS</a></li>
+                    <li><a href="corporate-settings.html">SETTINGS</a></li>
+                    <li><a href="main.html">DASHBOARD</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content">
+            <h1>Shared Partner <span>Documents</span></h1>
+            <p style="color: #aaa; margin-top: -10px; font-size: 14px;">External document formatting for supply chain distribution audit trails.</p>
+        </div>
+
+        <div class="cards" style="max-width: 1000px; margin: 0 auto; padding: 20px;">
+            <div class="nav-tabs" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <a href="base-report.html" style="padding:10px 20px; background:#16223f; color:#ccc; border:1px solid #3d4f73; border-radius:4px; font-weight:bold; text-decoration:none;">Base Report</a>
+                <a href="my-report.html" style="padding:10px 20px; background:#16223f; color:#ccc; border:1px solid #3d4f73; border-radius:4px; font-weight:bold; text-decoration:none;">My Report</a>
+                <a href="shared-report.html" style="padding:10px 20px; background:#ff7300; color:white; border-radius:4px; font-weight:bold; text-decoration:none;">Shared Report</a>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #00ff66;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2>📋 Verified Executed Cargo Registry</h2>
+                    <button class="btn-trigger" onclick="window.print()" style="padding:8px 16px; background:#00ff66; color:#000; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Generate PDF Document</button>
+                </div>
+                
+                <div style="overflow-x: auto; margin-top: 15px;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; color: #ccc;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid rgba(0,255,102,0.3); color: #fff;">
+                                <th style="padding: 10px;">Waybill Target</th>
+                                <th style="padding: 10px;">Client Account</th>
+                                <th style="padding: 10px;">Destination Drop</th>
+                                <th style="padding: 10px;">Audit Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sharedReportBody">
+                            <tr><td colspan="4" style="text-align:center; padding:20px; color:#666;">Parsing clean ledger nodes...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const app = initializeApp({ databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/" });
+        const db = getDatabase(app);
+
+        onValue(ref(db, 'customer_requests'), (snapshot) => {
+            const tbody = document.getElementById('sharedReportBody');
+            tbody.innerHTML = '';
+            if (snapshot.exists()) {
+                const confirmedData = Object.values(snapshot.val()).filter(d => d.pod_received);
+                if(confirmedData.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">No matching signed operations to export.</td></tr>';
+                    return;
+                }
+                confirmedData.forEach(order => {
+                    const row = document.createElement('tr');
+                    row.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                    row.innerHTML = `
+                        <td style="padding:10px; font-family:monospace; color:#00ff66;">${order.tracking_code || 'N/A'}</td>
+                        <td style="padding:10px; color:#fff;">${order.customer_name || 'N/A'}</td>
+                        <td style="padding:10px;">${order.destination || 'N/A'}</td>
+                        <td style="padding:10px; color:#00ff66; font-weight:bold;">✓ RECONCILED SIGNATURE</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">No operational records found.</td></tr>';
+            }
+        });
+    </script>
+</body>
+</html>
