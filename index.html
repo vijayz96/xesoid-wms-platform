@@ -3,158 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Techrome Logistics - Dashboard</title>
-    <link rel="stylesheet" href="log.css">
-</head>
-<body>
+    <title>Techrome Logistics - Login</title>
 
-    <header>
-        <div class="brand">
-            <span class="logo">🚚</span>
-            <h2>Techrome Logistics</h2>
-        </div>
-        <div class="user-profile">
-            <div class="welcome-text">
-                Welcome back, <strong id="userDisplay">User</strong>
-            </div>
-            <button class="logout-btn" onclick="logout()">Logout</button>
-        </div>
-    </header>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <main>
-        <div class="dashboard-title">
-            <h1>Fleet Operations Center</h1>
-            <p>System status and metrics overview updated in real-time.</p>
-        </div>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-        <div class="metrics-grid">
-            <div class="card">
-                <div class="card-info">
-                    <h3>Active Fleet</h3>
-                    <div class="value">142</div>
-                </div>
-                <div class="card-icon">🚛</div>
-            </div>
-            <div class="card">
-                <div class="card-info">
-                    <h3>In-Transit</h3>
-                    <div class="value">89</div>
-                </div>
-                <div class="card-icon">🗺️</div>
-            </div>
-            <div class="card">
-                <div class="card-info">
-                    <h3>Delivered (Today)</h3>
-                    <div class="value">314</div>
-                </div>
-                <div class="card-icon">✅</div>
-            </div>
-            <div class="card">
-                <div class="card-info">
-                    <h3>Alerts Pending</h3>
-                    <div class="value alert-count">2</div>
-                </div>
-                <div class="card-icon">⚠️</div>
-            </div>
-        </div>
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
 
-        <div class="content-grid">
-            
-            <div class="section-box list-section">
-                <h2>📋 Active Shipments Overview</h2>
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Shipment ID</th>
-                                <th>Destination</th>
-                                <th>Driver</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>#TL-9082</strong></td>
-                                <td>Chicago, IL</td>
-                                <td>Marcus Vance</td>
-                                <td><span class="status in-transit">In Transit</span></td>
-                            </tr>
-                            <tr>
-                                <td><strong>#TL-9083</strong></td>
-                                <td>Austin, TX</td>
-                                <td>Sarah Jenkins</td>
-                                <td><span class="status delivered">Delivered</span></td>
-                            </tr>
-                            <tr>
-                                <td><strong>#TL-9084</strong></td>
-                                <td>Los Angeles, CA</td>
-                                <td>David Miller</td>
-                                <td><span class="status delayed">Delayed</span></td>
-                            </tr>
-                            <tr>
-                                <td><strong>#TL-9085</strong></td>
-                                <td>Miami, FL</td>
-                                <td>Elena Rostova</td>
-                                <td><span class="status in-transit">In Transit</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 0;
+        }
 
-            <div class="section-box log-section">
-                <h2>🔔 Live Security & Dispatch Log</h2>
-                <div class="log-feed">
-                    <div class="log-item">
-                        <div class="log-icon">🔒</div>
-                        <div class="log-details">
-                            <p>User <strong id="logUser">admin</strong> initiated a secure session.</p>
-                            <span id="sessionTime">Just now</span>
-                        </div>
-                    </div>
-                    <div class="log-item">
-                        <div class="log-icon">📦</div>
-                        <div class="log-details">
-                            <p>Shipment #TL-9083 marked <strong>Delivered</strong> at warehouse node.</p>
-                            <span>14 mins ago</span>
-                        </div>
-                    </div>
-                    <div class="log-item">
-                        <div class="log-icon">🔧</div>
-                        <div class="log-details">
-                            <p>Route optimization script executed for Fleet Core B.</p>
-                            <span>1 hour ago</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            padding: 50px 40px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            animation: slideUp 0.6s ease-out;
+        }
 
-        </div>
-    </main>
-
-    <script>
-        // Security Gate: Redirect unauthenticated access attempts back to index.html
-        if (sessionStorage.getItem("isLoggedIn") !== "true") {
-            window.location.href = "index.html"; 
-        } else {
-            // Dynamic Session Injection
-            const activeUser = sessionStorage.getItem("username") || "Admin";
-            const loginTimeRaw = sessionStorage.getItem("loginTime");
-            
-            document.getElementById("userDisplay").textContent = activeUser;
-            document.getElementById("logUser").textContent = activeUser;
-            
-            if (loginTimeRaw) {
-                const loginTimestamp = new Date(loginTimeRaw);
-                document.getElementById("sessionTime").textContent = loginTimestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
 
-        // Session Termination Function targeting index.html
-        function logout() {
-            sessionStorage.clear(); // Clears all session keys completely to prevent auth ghosting
-            window.location.href = "index.html";
+        .company-logo {
+            font-size: 60px;
+            margin-bottom: 10px;
+            animation: pulse 2s infinite;
         }
-    </script>
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        h1 {
+            color: #2d3748;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            color: #718096;
+            font-size: 14px;
+            font-weight: 300;
+            margin-bottom: 35px;
+            letter-spacing: 0.5px;
+        }
+
+        .login-btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .info {
+            color: #a0aec0;
+            font-size: 12px;
+            margin-top: 25px;
+            font-weight: 300;
+            letter-spacing: 0.3px;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 35px 25px;
+            }
+            h1 { font-size: 24px; }
+            .company-logo { font-size: 50px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="overlay"></div>
+
+    <div class="login-container">
+        <div class="company-logo">🚚</div>
+
+        <h1>Techrome Logistics</h1>
+        <p class="subtitle">Smart Logistics & Warehouse Management System</p>
+
+        <a href="main.html" class="login-btn">
+            Enter to WMS
+        </a>
+
+        <div class="info">
+            Access Portal • Fleet Management • Shipment Tracking
+        </div>
+    </div>
+
 </body>
 </html>
