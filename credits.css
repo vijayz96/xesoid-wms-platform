@@ -226,3 +226,24 @@ max-width:320px;
     color:white;
     font-weight:700;
 }
+.dashboard-btn{
+    margin-top:20px;
+    text-align:center;
+}
+
+.dashboard-btn a{
+    display:inline-block;
+    padding:12px 25px;
+    background:linear-gradient(45deg,#ff63e6,#a855f7);
+    color:white;
+    text-decoration:none;
+    font-weight:700;
+    border-radius:30px;
+    transition:0.3s ease;
+    box-shadow:0 0 15px rgba(255,99,230,0.4);
+}
+
+.dashboard-btn a:hover{
+    transform:translateY(-3px) scale(1.05);
+    box-shadow:0 0 25px rgba(255,99,230,0.7);
+}
