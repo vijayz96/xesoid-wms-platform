@@ -1,172 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Zbilz - Sales Analytics Dashboard</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Techrome Logistics</title>
 
-    <script src="auth-guard.js"></script>
-    <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css">
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="main">
-        <div class="navbar">
-            <div class="icon">
-                <h2 class="logo">Zbilz</h2>
-            </div>
 
-            <div class="menu">
-                <ul>
-                    <li><a href="main.html">main</a></li>
-                    <li><a href="home.html">HOME</a></li>
-                    <li><a href="request.html">REQUEST</a></li>
-                    <li><a href="booking.html">BOOKING</a></li>
-                    <li><a href="tasks.html">TASKS</a></li>
-                    <li><a href="vehicle/driver.html">VEHICLE/DRIVER</a></li>
-                    <li><a href="execute.html">EXECUTE</a></li>
-                    <li><a href="delivery.html">DELIVERY</a></li>
-                    <li><a href="service.html">SERVICE ORDER</a></li>
-                    <li><a href="invoice.html">INVOICE</a></li>
-                    <li><a href="analysis.html">ANALYTICS</a></li>
-                    <li><a href="report.html">REPORTS</a></li>
-                    <li><a href="setting.html">SETTING</a></li>
-                 
-                </ul>
-            </div>
-        </div>
+<div class="overlay"></div>
 
-        <div class="content">
-            <h1>Sales <span>Performance</span></h1>
+<div class="login-container">
 
-        </div>
-
-        <div class="cards">
-            <div class="card">
-                <h2>Total Revenue</h2>
-                <div class="live-counter" id="totalRevenue">$0.00</div>
-
-            </div>
-
-            <div class="card recent-card">
-                <h2>Recent Order</h2>
-                <div id="recentItemBox">
-                    <div class="recent-title" id="recentBillId">Loading...</div>
-                    <div class="recent-meta">Amount: <span id="recentAmount">--</span></div>
-                    <div class="recent-meta">Status: <span id="recentStatus" style="color: #ff7c00;">--</span></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="chart-container" style="position: relative; margin: 40px auto; padding: 20px; width: 90%; max-width: 800px; background: rgba(30,30,30,0.7); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
-            <h3 style="color: #fff; margin-bottom: 15px; font-weight: 500;">Sales Price Action & Volume</h3>
-            <canvas id="salesChart"></canvas>
-        </div>
+    <div class="company-logo">
+        🚚
     </div>
 
-    <script>
-        if (localStorage.getItem("userRole") !== "admin") {
-            const setupNavOption = document.getElementById("adminSetupNav");
-            if (setupNavOption) setupNavOption.style.display = "none";
-        }
-    </script>
+    <h1>Techrome Logistics</h1>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    <p class="subtitle">
+        Smart Logistics & Supply Chain Management
+    </p>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyC7bl9e1sDibEe4BP1PzWnOhwt_gpL7abo",
-            authDomain: "zbillz-f4798.firebaseapp.com",
-            databaseURL: "https://zbillz-f4798-default-rtdb.firebaseio.com",
-            projectId: "zbillz-f4798",
-            storageBucket: "zbillz-f4798.firebasestorage.app",
-            messagingSenderId: "495466751324",
-            appId: "1:495466751324:web:324e3440f13fad0acdcd99",
-            measurementId: "G-8SZG4XLT9P"
-        };
+    <form>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        <div class="input-box">
+            <input type="text" placeholder="Username" id="username" required>
+        </div>
 
-        // Elements
-        const totalRevenueBox = document.getElementById('totalRevenue');
-        const recentBillIdBox = document.getElementById('recentBillId');
-        const recentAmountBox = document.getElementById('recentAmount');
-        const recentStatusBox = document.getElementById('recentStatus');
+        <div class="input-box">
+            <input type="password" placeholder="Password" id="password" required>
+        </div>
 
-        // Initialize Chart.js Graphic Instance
-        const ctx = document.getElementById('salesChart').getContext('2d');
-        const salesChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: [], // Populated dynamically via billing database timestamps
-                datasets: [{
-                    label: 'Revenue Action ($)',
-                    data: [], // Populated dynamically from bill amounts
-                    borderColor: '#ff7c00',
-                    backgroundColor: 'rgba(255, 124, 0, 0.1)',
-                    borderWidth: 2,
-                    tension: 0.3,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { labels: { color: '#fff' } }
-                },
-                scales: {
-                    x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#aaa' } },
-                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#aaa' } }
-                }
-            }
-        });
+        <button type="button" class="login-btn" onclick="login()">
+            Login to Dashboard
+        </button>
 
-        // Event Listener targeting the Billing endpoint nodes
-        const billingRef = ref(db, 'billing');
-        onValue(billingRef, (snapshot) => {
-            if (snapshot.exists()) {
-                const data = snapshot.val();
-                let absoluteRevenue = 0;
+    </form>
 
-                let chartLabels = [];
-                let chartDataPoints = [];
+    <div class="info">
+        Secure Access Portal • Fleet Management • Shipment Tracking
+    </div>
 
-                const records = Object.entries(data);
+    <div id="message"></div>
 
-                records.forEach(([key, invoice]) => {
-                    // Change item total depending on how your billing node writes property fields (e.g., total, amount, grandTotal)
-                    const billAmount = Number(invoice.total || invoice.amount || 0);
-                    absoluteRevenue += billAmount;
+</div>
 
-                    // Prepare graphics structural tracking matrix
-                    const rawDate = invoice.date || 'Record';
-                    chartLabels.push(rawDate);
-                    chartDataPoints.push(billAmount);
-                });
+<script>
+function login(){
 
-                // Render metrics summaries out to cards
-                totalRevenueBox.innerText = `$${absoluteRevenue.toFixed(2)}`;
+    let user = document.getElementById("username").value;
+    let pass = document.getElementById("password").value;
 
-                // Update metrics targeting the final node array values
-                const [lastId, lastInvoice] = records[records.length - 1];
-                recentBillIdBox.innerText = `Invoice ID: ${lastId.substring(0, 8)}`;
-                recentAmountBox.innerText = `$${Number(lastInvoice.total || lastInvoice.amount || 0).toFixed(2)}`;
-                recentStatusBox.innerText = lastInvoice.status || "Paid";
+    if(user === "admin" && pass === "admin"){
+        document.getElementById("message").innerHTML =
+        "✅ Login Successful";
 
-                // Refresh Graphic Object Datasets
-                salesChart.data.labels = chartLabels;
-                salesChart.data.datasets[0].data = chartDataPoints;
-                salesChart.update();
+        setTimeout(()=>{
+            window.location.href="dashboard.html";
+        },1000);
 
-            } else {
-                totalRevenueBox.innerText = "$0.00";
-                recentBillIdBox.innerText = "No Bills Evaluated";
-                recentAmountBox.innerText = "--";
-                recentStatusBox.innerText = "--";
-            }
-        });
-    </script>
+    }else{
+        document.getElementById("message").innerHTML =
+        "❌ Invalid Username or Password";
+    }
+}
+</script>
+
 </body>
 </html>
