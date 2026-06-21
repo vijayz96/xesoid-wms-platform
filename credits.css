@@ -124,14 +124,14 @@ margin-bottom:20px;
 .socials{
     display:flex;
     justify-content:center;
-    gap:8px;
+    align-items:center;
+    gap:10px;
 }
 
 .socials a{
-    padding:8px 12px;
-    font-size:12px;
-    flex:none;
-    min-width:auto;
+    width:100px;
+    text-align:center;
+    padding:8px 0;
 }
 
 .socials a:hover{
