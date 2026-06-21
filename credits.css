@@ -192,3 +192,39 @@ max-width:320px;
 }
 
 }
+.personal-info{
+    margin-top:25px;
+    background:rgba(255,255,255,0.08);
+    backdrop-filter:blur(15px);
+    padding:25px;
+    border-radius:20px;
+    border:1px solid rgba(255,255,255,0.15);
+}
+
+.personal-info h3{
+    color:#ff63e6;
+    margin-bottom:20px;
+    font-size:1.5rem;
+}
+
+.info-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:12px 0;
+    border-bottom:1px solid rgba(255,255,255,0.1);
+}
+
+.info-item:last-child{
+    border-bottom:none;
+}
+
+.info-item span{
+    color:#cfcfcf;
+    font-weight:500;
+}
+
+.info-item strong{
+    color:white;
+    font-weight:700;
+}
