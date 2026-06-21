@@ -133,12 +133,12 @@
     </main>
 
     <script>
-        // Security Gate: Redirect unauthenticated access attempts
+        // Security Gate: Redirect unauthenticated access attempts back to index.html
         if (sessionStorage.getItem("isLoggedIn") !== "true") {
-            window.location.href = "login.html"; 
+            window.location.href = "index.html"; 
         } else {
             // Dynamic Session Injection
-            const activeUser = sessionStorage.getItem("username");
+            const activeUser = sessionStorage.getItem("username") || "Admin";
             const loginTimeRaw = sessionStorage.getItem("loginTime");
             
             document.getElementById("userDisplay").textContent = activeUser;
@@ -150,12 +150,10 @@
             }
         }
 
-        // Session Termination Function
+        // Session Termination Function targeting index.html
         function logout() {
-            sessionStorage.removeItem("isLoggedIn");
-            sessionStorage.removeItem("username");
-            sessionStorage.removeItem("loginTime");
-            window.location.href = "login.html";
+            sessionStorage.clear(); // Clears all session keys completely to prevent auth ghosting
+            window.location.href = "index.html";
         }
     </script>
 </body>
