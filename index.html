@@ -3,150 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Techrome Logistics - Login</title>
-    
+    <title>Techrome Logistics - Dashboard</title>
     <link rel="stylesheet" href="log.css">
-    
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="overlay"></div>
 
-    <div class="login-container">
-        <div class="company-logo">🚚</div>
-
-        <h1>Techrome Logistics</h1>
-        <p class="subtitle">Smart Logistics & Supply Chain Management</p>
-
-        <form id="loginForm" onsubmit="return false;">
-            <div class="input-box">
-                <input 
-                    type="text" 
-                    placeholder="Username" 
-                    id="username" 
-                    required
-                    autocomplete="username"
-                >
+    <header>
+        <div class="brand">
+            <span class="logo">🚚</span>
+            <h2>Techrome Logistics</h2>
+        </div>
+        <div class="user-profile">
+            <div class="welcome-text">
+                Welcome back, <strong id="userDisplay">User</strong>
             </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </header>
 
-            <div class="input-box">
-                <input 
-                    type="password" 
-                    placeholder="Password" 
-                    id="password" 
-                    required
-                    autocomplete="current-password"
-                >
-                <span class="password-toggle" onclick="togglePassword()" id="toggleIcon">👁️</span>
-            </div>
-
-            <button type="submit" class="login-btn" id="loginBtn" onclick="login()">
-                Login to Dashboard
-            </button>
-        </form>
-
-        <div class="info">
-            Secure Access Portal • Fleet Management • Shipment Tracking
+    <main>
+        <div class="dashboard-title">
+            <h1>Fleet Operations Center</h1>
+            <p>System status and metrics overview updated in real-time.</p>
         </div>
 
-        <div id="message"></div>
-    </div>
+        <div class="metrics-grid">
+            <div class="card">
+                <div class="card-info">
+                    <h3>Active Fleet</h3>
+                    <div class="value">142</div>
+                </div>
+                <div class="card-icon">🚛</div>
+            </div>
+            <div class="card">
+                <div class="card-info">
+                    <h3>In-Transit</h3>
+                    <div class="value">89</div>
+                </div>
+                <div class="card-icon">🗺️</div>
+            </div>
+            <div class="card">
+                <div class="card-info">
+                    <h3>Delivered (Today)</h3>
+                    <div class="value">314</div>
+                </div>
+                <div class="card-icon">✅</div>
+            </div>
+            <div class="card">
+                <div class="card-info">
+                    <h3>Alerts Pending</h3>
+                    <div class="value alert-count">2</div>
+                </div>
+                <div class="card-icon">⚠️</div>
+            </div>
+        </div>
+
+        <div class="content-grid">
+            
+            <div class="section-box list-section">
+                <h2>📋 Active Shipments Overview</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Shipment ID</th>
+                                <th>Destination</th>
+                                <th>Driver</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>#TL-9082</strong></td>
+                                <td>Chicago, IL</td>
+                                <td>Marcus Vance</td>
+                                <td><span class="status in-transit">In Transit</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>#TL-9083</strong></td>
+                                <td>Austin, TX</td>
+                                <td>Sarah Jenkins</td>
+                                <td><span class="status delivered">Delivered</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>#TL-9084</strong></td>
+                                <td>Los Angeles, CA</td>
+                                <td>David Miller</td>
+                                <td><span class="status delayed">Delayed</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>#TL-9085</strong></td>
+                                <td>Miami, FL</td>
+                                <td>Elena Rostova</td>
+                                <td><span class="status in-transit">In Transit</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="section-box log-section">
+                <h2>🔔 Live Security & Dispatch Log</h2>
+                <div class="log-feed">
+                    <div class="log-item">
+                        <div class="log-icon">🔒</div>
+                        <div class="log-details">
+                            <p>User <strong id="logUser">admin</strong> initiated a secure session.</p>
+                            <span id="sessionTime">Just now</span>
+                        </div>
+                    </div>
+                    <div class="log-item">
+                        <div class="log-icon">📦</div>
+                        <div class="log-details">
+                            <p>Shipment #TL-9083 marked <strong>Delivered</strong> at warehouse node.</p>
+                            <span>14 mins ago</span>
+                        </div>
+                    </div>
+                    <div class="log-item">
+                        <div class="log-icon">🔧</div>
+                        <div class="log-details">
+                            <p>Route optimization script executed for Fleet Core B.</p>
+                            <span>1 hour ago</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
 
     <script>
-        // Toggle password visibility
-        function togglePassword() {
-            const passwordInput = document.getElementById('password');
-            const toggleIcon = document.getElementById('toggleIcon');
+        // Security Gate: Redirect unauthenticated access attempts
+        if (sessionStorage.getItem("isLoggedIn") !== "true") {
+            window.location.href = "login.html"; 
+        } else {
+            // Dynamic Session Injection
+            const activeUser = sessionStorage.getItem("username");
+            const loginTimeRaw = sessionStorage.getItem("loginTime");
             
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                toggleIcon.textContent = '🙈';
-            } else {
-                passwordInput.type = 'password';
-                toggleIcon.textContent = '👁️';
+            document.getElementById("userDisplay").textContent = activeUser;
+            document.getElementById("logUser").textContent = activeUser;
+            
+            if (loginTimeRaw) {
+                const loginTimestamp = new Date(loginTimeRaw);
+                document.getElementById("sessionTime").textContent = loginTimestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             }
         }
 
-        // Login function
-        function login() {
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value.trim();
-            const message = document.getElementById('message');
-            const loginBtn = document.getElementById('loginBtn');
-
-            // Clear previous messages
-            message.className = '';
-            message.innerHTML = '';
-
-            // Validation
-            if (!username || !password) {
-                message.className = 'error';
-                message.innerHTML = '❌ Please enter both username and password';
-                return;
-            }
-
-            if (username.length < 3) {
-                message.className = 'error';
-                message.innerHTML = '❌ Username must be at least 3 characters';
-                return;
-            }
-
-            // Show loading state
-            loginBtn.disabled = true;
-            loginBtn.innerHTML = '⏳ Authenticating...';
-
-            // Simulate API call delay
-            setTimeout(() => {
-                // Authentication logic
-                if (username === "admin" && password === "admin") {
-                    // Store session
-                    sessionStorage.setItem("isLoggedIn", "true");
-                    sessionStorage.setItem("username", username);
-                    sessionStorage.setItem("loginTime", new Date().toISOString());
-
-                    message.className = 'success';
-                    message.innerHTML = '✅ Login Successful! Redirecting...';
-
-                    // Redirect to main page
-                    setTimeout(() => {
-                        window.location.href = "main.html";
-                    }, 1000);
-                } else {
-                    message.className = 'error';
-                    message.innerHTML = '❌ Invalid Username or Password';
-                    
-                    // Reset button
-                    loginBtn.disabled = false;
-                    loginBtn.innerHTML = 'Login to Dashboard';
-                    
-                    // Clear password field
-                    document.getElementById('password').value = '';
-                    document.getElementById('password').focus();
-                }
-            }, 1500);
+        // Session Termination Function
+        function logout() {
+            sessionStorage.removeItem("isLoggedIn");
+            sessionStorage.removeItem("username");
+            sessionStorage.removeItem("loginTime");
+            window.location.href = "login.html";
         }
-
-        // Enter key support
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') {
-                const activeElement = document.activeElement;
-                if (activeElement && (activeElement.id === 'username' || activeElement.id === 'password')) {
-                    login();
-                }
-            }
-        });
-
-        // Auto-focus username on load
-        window.addEventListener('load', function() {
-            document.getElementById('username').focus();
-        });
-
-        // Check if already logged in
-        window.addEventListener('load', function() {
-            if (sessionStorage.getItem("isLoggedIn") === "true") {
-                window.location.href = "main.html";
-            }
-        });
     </script>
 </body>
 </html>
