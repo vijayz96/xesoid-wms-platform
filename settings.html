@@ -12,8 +12,9 @@
             <div class="icon"><h2 class="logo">Xesoid WMS</h2></div>
             <div class="menu">
                 <ul>
-                    <li><a href="index.html">LOG-OUT</a></li>
-                
+                    <li>
+    <a href="#" onclick="logout()">LOG-OUT</a>
+                    </li>
                 
                     <li><a href="main.html">DASHBOARD</a></li>
                 </ul>
@@ -79,7 +80,16 @@
             </div>
         </div>
     </div>
+ <script>
+function logout() {
 
+    sessionStorage.clear();
+    localStorage.clear();
+
+    window.location.replace("index.html");
+
+}
+    </script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -130,5 +140,6 @@
             }
         });
     </script>
+   
 </body>
 </html>
