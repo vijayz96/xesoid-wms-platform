@@ -1,74 +1,392 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Techrome Logistics</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Techrome Logistics - Login</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<link rel="stylesheet" href="log.css">
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 0;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            padding: 50px 40px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .company-logo {
+            text-align: center;
+            font-size: 60px;
+            margin-bottom: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        h1 {
+            text-align: center;
+            color: #2d3748;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            font-size: 14px;
+            font-weight: 300;
+            margin-bottom: 35px;
+            letter-spacing: 0.5px;
+        }
+
+        .input-box {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .input-box input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+            background: #f7fafc;
+            color: #2d3748;
+        }
+
+        .input-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-box input::placeholder {
+            color: #a0aec0;
+            font-weight: 300;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #a0aec0;
+            font-size: 18px;
+            user-select: none;
+            transition: color 0.3s;
+        }
+
+        .password-toggle:hover {
+            color: #667eea;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .info {
+            text-align: center;
+            color: #a0aec0;
+            font-size: 12px;
+            margin-top: 25px;
+            font-weight: 300;
+            letter-spacing: 0.3px;
+        }
+
+        #message {
+            text-align: center;
+            margin-top: 15px;
+            font-weight: 500;
+            font-size: 14px;
+            min-height: 24px;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        #message.success {
+            color: #48bb78;
+            background: #f0fff4;
+        }
+
+        #message.error {
+            color: #fc8181;
+            background: #fff5f5;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 35px 25px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .company-logo {
+                font-size: 50px;
+            }
+        }
+    </style>
 </head>
 <body>
+    <div class="overlay"></div>
 
-<div class="overlay"></div>
+    <div class="login-container">
+        <div class="company-logo">🚚</div>
 
-<div class="login-container">
+        <h1>Techrome Logistics</h1>
+        <p class="subtitle">Smart Logistics & Supply Chain Management</p>
 
-    <div class="company-logo">
-        🚚
-    </div>
+        <form id="loginForm" onsubmit="return false;">
+            <div class="input-box">
+                <input 
+                    type="text" 
+                    placeholder="Username" 
+                    id="username" 
+                    required
+                    autocomplete="username"
+                >
+            </div>
 
-    <h1>Techrome Logistics</h1>
+            <div class="input-box">
+                <input 
+                    type="password" 
+                    placeholder="Password" 
+                    id="password" 
+                    required
+                    autocomplete="current-password"
+                >
+                <span class="password-toggle" onclick="togglePassword()" id="toggleIcon">👁️</span>
+            </div>
 
-    <p class="subtitle">
-        Smart Logistics & Supply Chain Management
-    </p>
+            <button type="submit" class="login-btn" id="loginBtn" onclick="login()">
+                Login to Dashboard
+            </button>
+        </form>
 
-    <form>
-
-        <div class="input-box">
-            <input type="text" placeholder="Username" id="username" required>
+        <div class="info">
+            Secure Access Portal • Fleet Management • Shipment Tracking
         </div>
 
-        <div class="input-box">
-            <input type="password" placeholder="Password" id="password" required>
-        </div>
-
-        <button type="button" class="login-btn" onclick="login()">
-            Login to Dashboard
-        </button>
-
-    </form>
-
-    <div class="info">
-        Secure Access Portal • Fleet Management • Shipment Tracking
+        <div id="message"></div>
     </div>
 
-    <div id="message"></div>
+    <script>
+        // Toggle password visibility
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggleIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.textContent = '👁️';
+            }
+        }
 
-</div>
+        // Login function
+        function login() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const message = document.getElementById('message');
+            const loginBtn = document.getElementById('loginBtn');
 
-<script>
-function login(){
+            // Clear previous messages
+            message.className = '';
+            message.innerHTML = '';
 
-    let user = document.getElementById("username").value;
-    let pass = document.getElementById("password").value;
+            // Validation
+            if (!username || !password) {
+                message.className = 'error';
+                message.innerHTML = '❌ Please enter both username and password';
+                shakeElement(document.querySelector('.login-container'));
+                return;
+            }
 
-    if(user === "admin" && pass === "admin"){
-        document.getElementById("message").innerHTML =
-        "✅ Login Successful";
+            if (username.length < 3) {
+                message.className = 'error';
+                message.innerHTML = '❌ Username must be at least 3 characters';
+                return;
+            }
 
-        setTimeout(()=>{
-            window.location.href="main.html";
-        },1000);
+            // Show loading state
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<span class="loading-spinner"></span> Authenticating...';
 
-    }else{
-        document.getElementById("message").innerHTML =
-        "❌ Invalid Username or Password";
-    }
-}
-</script>
+            // Simulate API call delay
+            setTimeout(() => {
+                // Authentication logic
+                if (username === "admin" && password === "admin") {
+                    // Store session
+                    sessionStorage.setItem("isLoggedIn", "true");
+                    sessionStorage.setItem("username", username);
+                    sessionStorage.setItem("loginTime", new Date().toISOString());
 
+                    message.className = 'success';
+                    message.innerHTML = '✅ Login Successful! Redirecting...';
+
+                    // Redirect to main page
+                    setTimeout(() => {
+                        window.location.href = "main.html";
+                    }, 1000);
+                } else {
+                    message.className = 'error';
+                    message.innerHTML = '❌ Invalid Username or Password';
+                    
+                    // Reset button
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = 'Login to Dashboard';
+                    
+                    // Shake animation
+                    shakeElement(document.querySelector('.login-container'));
+                    
+                    // Clear password field
+                    document.getElementById('password').value = '';
+                    document.getElementById('password').focus();
+                }
+            }, 1500);
+        }
+
+        // Shake animation for error
+        function shakeElement(element) {
+            element.style.animation = 'shake 0.5s ease';
+            setTimeout(() => {
+                element.style.animation = '';
+            }, 500);
+        }
+
+        // Add shake keyframe dynamically
+        const styleSheet = document.createElement("style");
+        styleSheet.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+                20%, 40%, 60%, 80% { transform: translateX(10px); }
+            }
+        `;
+        document.head.appendChild(styleSheet);
+
+        // Enter key support
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                const activeElement = document.activeElement;
+                if (activeElement && (activeElement.id === 'username' || activeElement.id === 'password')) {
+                    login();
+                }
+            }
+        });
+
+        // Auto-focus username on load
+        window.addEventListener('load', function() {
+            document.getElementById('username').focus();
+        });
+
+        // Check if already logged in
+        window.addEventListener('load', function() {
+            if (sessionStorage.getItem("isLoggedIn") === "true") {
+                // Redirect to main if already logged in
+                window.location.href = "main.html";
+            }
+        });
+    </script>
 </body>
 </html>
