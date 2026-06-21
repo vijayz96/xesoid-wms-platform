@@ -1,0 +1,194 @@
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
+body{
+background:#0e0718;
+color:white;
+overflow-x:hidden;
+min-height:100vh;
+}
+
+.bg-animation{
+position:fixed;
+width:100%;
+height:100%;
+background:
+radial-gradient(circle at 20% 20%,#ff4fd8 0%,transparent 30%),
+radial-gradient(circle at 80% 60%,#8b5cf6 0%,transparent 35%);
+filter:blur(120px);
+animation:move 8s infinite alternate;
+z-index:-1;
+}
+
+@keyframes move{
+from{
+transform:translateY(-20px);
+}
+to{
+transform:translateY(40px);
+}
+}
+
+.hero{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:60px;
+flex-wrap:wrap;
+min-height:100vh;
+}
+
+.left{
+max-width:600px;
+}
+
+.left h1{
+font-size:4rem;
+margin-bottom:20px;
+}
+
+.left span{
+color:#ff63e6;
+}
+
+.left p{
+color:#d9d9d9;
+line-height:1.8;
+margin-bottom:30px;
+}
+
+.stats{
+display:flex;
+gap:20px;
+flex-wrap:wrap;
+}
+
+.card{
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(20px);
+padding:20px;
+border-radius:20px;
+min-width:140px;
+text-align:center;
+border:1px solid rgba(255,255,255,0.15);
+transition:.4s;
+}
+
+.card:hover{
+transform:translateY(-10px);
+}
+
+.card h2{
+color:#ff63e6;
+}
+
+.profile-card{
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(25px);
+padding:30px;
+border-radius:30px;
+text-align:center;
+width:320px;
+border:1px solid rgba(255,255,255,0.15);
+animation:float 3s infinite ease-in-out;
+}
+
+@keyframes float{
+0%{transform:translateY(0);}
+50%{transform:translateY(-15px);}
+100%{transform:translateY(0);}
+}
+
+.profile-card img{
+width:180px;
+height:180px;
+object-fit:cover;
+border-radius:50%;
+border:4px solid #ff63e6;
+margin-bottom:15px;
+}
+
+.profile-card h2{
+margin-bottom:8px;
+}
+
+.profile-card p{
+color:#ddd;
+margin-bottom:20px;
+}
+
+.socials{
+display:flex;
+justify-content:center;
+gap:15px;
+}
+
+.socials a{
+text-decoration:none;
+color:white;
+padding:10px 20px;
+background:#ff63e6;
+border-radius:25px;
+transition:.3s;
+}
+
+.socials a:hover{
+transform:scale(1.08);
+}
+
+.team{
+padding:80px 40px;
+text-align:center;
+}
+
+.team h2{
+font-size:3rem;
+margin-bottom:40px;
+}
+
+.team-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:25px;
+}
+
+.member{
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(20px);
+padding:25px;
+border-radius:20px;
+transition:.4s;
+}
+
+.member:hover{
+transform:translateY(-10px);
+}
+
+.member h3{
+color:#ff63e6;
+margin-bottom:10px;
+}
+
+@media(max-width:768px){
+
+.hero{
+padding:30px;
+text-align:center;
+justify-content:center;
+gap:40px;
+}
+
+.left h1{
+font-size:2.8rem;
+}
+
+.profile-card{
+width:100%;
+max-width:320px;
+}
+
+}
