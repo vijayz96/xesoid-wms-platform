@@ -6,7 +6,7 @@
         const loggedIn = sessionStorage.getItem("loggedIn");
 
         if (loggedIn !== "true") {
-            window.location.replace("index.html");
+            window.location.replace("main.html");
         }
     }
 
