@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>Logizoid · Track</title>
+  <!-- Use the existing logizoid.css (assumed to be in the same directory) -->
+  <link rel="stylesheet" href="logizoid.css">
+  <!-- Firebase compatibility SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <!-- Font Awesome 6 (free) for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* minimal internal style – only for fine-tuning, relies on logizoid.css */
+    .track-card .copy-btn { background: transparent; border: none; color: var(--orange, #f57c00); cursor: pointer; font-size: 1.1rem; margin-left: 8px; }
+    .track-card .copy-btn:hover { color: #ff9800; }
+    .status-guide { display: flex; flex-wrap: wrap; gap: 12px 20px; background: var(--card-bg, #1e2a3a); padding: 16px 20px; border-radius: 20px; margin-bottom: 24px; border-left: 4px solid var(--orange, #f57c00); }
+    .guide-item { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; }
+    .guide-dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+    .recent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 12px; }
+    .recent-card { background: var(--card-bg, #1e2a3a); border-radius: 16px; padding: 14px 16px; cursor: pointer; transition: 0.2s; border-left: 4px solid var(--orange, #f57c00); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    .recent-card:hover { transform: translateY(-4px); box-shadow: 0 8px 18px rgba(0,0,0,0.3); }
+    .recent-card .track-code { font-weight: 600; color: var(--orange, #f57c00); }
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 30px; font-size: 0.75rem; font-weight: 600; text-transform: capitalize; }
+    .timeline { display: flex; flex-wrap: wrap; gap: 4px 0; margin: 24px 0 12px; position: relative; }
+    .timeline-step { flex: 1 0 100px; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 8px 4px; border-top: 3px solid #3a4a5e; opacity: 0.5; transition: 0.3s; }
+    .timeline-step.active { opacity: 1; border-top-color: var(--orange, #f57c00); }
+    .timeline-step.completed { opacity: 1; border-top-color: #4caf50; }
+    .timeline-step.cancelled { opacity: 1; border-top-color: #e53935; }
+    .step-icon { font-size: 1.3rem; margin-bottom: 4px; }
+    .step-label { font-size: 0.7rem; font-weight: 500; }
+    .search-wrapper { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .search-wrapper input { flex: 2 1 260px; }
+    .search-wrapper button { flex: 0 0 auto; }
+    .welcome-card { background: var(--card-bg, #1e2a3a); border-radius: 24px; padding: 30px 24px; text-align: center; border: 1px dashed #3a4a5e; }
+    .welcome-card i { font-size: 3rem; color: var(--orange, #f57c00); margin-bottom: 12px; }
+    .loading-spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid #3a4a5e; border-radius: 50%; border-top-color: var(--orange, #f57c00); animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-card { background: #2a1a1a; border-left: 6px solid #e53935; border-radius: 20px; padding: 20px 24px; color: #ffcdd2; }
+    .error-card h4 { color: #ef5350; }
+    .quotation-highlight { color: #66bb6a; font-weight: 700; }
+    .detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap: 14px; background: var(--card-bg, #1e2a3a); padding: 20px; border-radius: 20px; margin-top: 12px; }
+    .detail-item { display: flex; flex-direction: column; }
+    .detail-item .label { font-size: 0.7rem; text-transform: uppercase; opacity: 0.6; }
+    .detail-item .value { font-weight: 500; word-break: break-word; }
+    .back-btn { background: transparent; border: 1px solid #3a4a5e; color: #cfd8dc; padding: 6px 16px; border-radius: 30px; transition: 0.2s; }
+    .back-btn:hover { background: #2a3a4a; color: white; }
+    @media (max-width: 600px) { .status-guide { flex-direction: column; gap: 6px; } .timeline { flex-wrap: nowrap; overflow-x: auto; } }
+  </style>
+</head>
+<body>
+  <!-- Logizoid navigation header (matches order.html style) -->
+  <header class="logizoid-header" style="display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; background: #0b1420; border-bottom: 1px solid #1e2a3a;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <i class="fas fa-cube" style="color: #f57c00; font-size: 1.6rem;"></i>
+      <span style="font-weight: 700; font-size: 1.4rem; letter-spacing: 1px;">Logizoid</span>
+      <span style="background: #f57c00; color: #0b1420; padding: 2px 10px; border-radius: 30px; font-size: 0.7rem; font-weight: 600;">TRACK</span>
+    </div>
+    <div>
+      <button class="back-btn" onclick="window.location.href='dashboard.html'"><i class="fas fa-arrow-left"></i> Dashboard</button>
+    </div>
+  </header>
+
+  <main style="max-width: 1300px; margin: 0 auto; padding: 24px 20px;">
+    <!-- Shipment Status Guide (permanent) -->
+    <div class="status-guide">
+      <span class="guide-item"><span class="guide-dot" style="background:#f57c00;"></span> Pending · verification</span>
+      <span class="guide-item"><span class="guide-dot" style="background:#42a5f5;"></span> Approved · accepted</span>
+      <span class="guide-item"><span class="guide-dot" style="background:#ab47bc;"></span> Pickup Scheduled · driver assigned</span>
+      <span class="guide-item"><span class="guide-dot" style="background:#fdd835;"></span> In Transit · moving</span>
+      <span class="guide-item"><span class="guide-dot" style="background:#26c6da;"></span> Out for Delivery · executive</span>
+      <span class="guide-item"><span class="guide-dot" style="background:#66bb6a;"></span> Delivered · success</span>
+      <span class="guide-item"><span class="guide-dot" style="background:#ef5350;"></span> Cancelled · rejected</span>
+    </div>
+
+    <!-- Search section -->
+    <div class="search-wrapper" style="margin-bottom: 28px;">
+      <input type="text" id="searchInput" placeholder="Enter tracking code, customer name or contact" class="form-input" style="padding: 14px 20px; border-radius: 40px; border: 1px solid #2a3a4a; background: #141f2b; color: #e0e8f0;">
+      <button id="searchBtn" class="btn-primary" style="border-radius: 40px; padding: 12px 32px;"><i class="fas fa-search"></i> Search</button>
+    </div>
+
+    <!-- Dynamic content area -->
+    <div id="contentArea">
+      <!-- Welcome card (default) -->
+      <div id="welcomeCard" class="welcome-card">
+        <i class="fas fa-shipping-fast"></i>
+        <h3 style="margin: 8px 0;">Track your shipment</h3>
+        <p style="opacity:0.7;">Enter a tracking code, customer name, or phone number to get real‑time status.</p>
+      </div>
+      <!-- Shipment detail card (hidden by default) -->
+      <div id="shipmentDetail" style="display: none;"></div>
+      <!-- Recent shipments -->
+      <div id="recentSection" style="margin-top: 40px;">
+        <h4 style="display: flex; align-items: center; gap: 8px;"><i class="fas fa-clock" style="color: #f57c00;"></i> Recent shipments</h4>
+        <div id="recentGrid" class="recent-grid"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    (function() {
+      // Firebase config
+      const firebaseConfig = {
+        apiKey: "AIzaSyBffzzeiU6mwm2mg1QzcXvXRs1XP1ikk-4",
+        authDomain: "xesoid-wms.firebaseapp.com",
+        databaseURL: "https://xesoid-wms-default-rtdb.firebaseio.com/",
+        projectId: "xesoid-wms",
+        storageBucket: "xesoid-wms.appspot.com",
+        messagingSenderId: "331402984810",
+        appId: "1:331402984810:web:2fcabbd085826d709f913",
+        measurementId: "G-R33XEZ29NX"
+      };
+
+      // Initialize Firebase if not already
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      const db = firebase.database();
+
+      // DOM refs
+      const searchInput = document.getElementById('searchInput');
+      const searchBtn = document.getElementById('searchBtn');
+      const contentArea = document.getElementById('contentArea');
+      const welcomeCard = document.getElementById('welcomeCard');
+      const shipmentDetail = document.getElementById('shipmentDetail');
+      const recentGrid = document.getElementById('recentGrid');
+
+      // Helper: format timestamp
+      function formatDate(ts) {
+        if (!ts) return '—';
+        const d = new Date(ts);
+        return d.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      }
+
+      // Helper: status color
+      function statusColor(status) {
+        const s = (status || '').toLowerCase();
+        if (s.includes('pending')) return '#f57c00';
+        if (s.includes('approved')) return '#42a5f5';
+        if (s.includes('pickup')) return '#ab47bc';
+        if (s.includes('transit')) return '#fdd835';
+        if (s.includes('out for delivery')) return '#26c6da';
+        if (s.includes('delivered')) return '#66bb6a';
+        if (s.includes('cancelled')) return '#ef5350';
+        return '#90a4ae';
+      }
+
+      // Build timeline
+      function buildTimeline(status) {
+        const stages = ['Order Created', 'Officer Review', 'Approved', 'Pickup Scheduled', 'In Transit', 'Out for Delivery', 'Delivered', 'Cancelled'];
+        const statusLower = (status || '').toLowerCase();
+        let activeIndex = -1;
+        if (statusLower.includes('pending')) activeIndex = 1;
+        else if (statusLower.includes('approved')) activeIndex = 2;
+        else if (statusLower.includes('pickup')) activeIndex = 3;
+        else if (statusLower.includes('transit')) activeIndex = 4;
+        else if (statusLower.includes('out for delivery')) activeIndex = 5;
+        else if (statusLower.includes('delivered')) activeIndex = 6;
+        else if (statusLower.includes('cancelled')) activeIndex = 7;
+        // if no match, default to 0 (order created)
+        if (activeIndex === -1) activeIndex = 0;
+
+        let html = '<div class="timeline">';
+        stages.forEach((label, idx) => {
+          let cls = 'timeline-step';
+          if (idx === activeIndex) cls += ' active';
+          else if (idx < activeIndex && activeIndex !== 7) cls += ' completed';
+          else if (idx < activeIndex && activeIndex === 7) cls += ' cancelled';
+          // special: if cancelled, mark all before as completed and cancel at 7
+          if (activeIndex === 7) {
+            if (idx === 7) cls = 'timeline-step cancelled';
+            else if (idx < 7) cls = 'timeline-step completed';
+          }
+          let icon = 'fa-circle';
+          if (idx === 0) icon = 'fa-file-alt';
+          else if (idx === 1) icon = 'fa-clipboard-check';
+          else if (idx === 2) icon = 'fa-check-circle';
+          else if (idx === 3) icon = 'fa-calendar-check';
+          else if (idx === 4) icon = 'fa-truck';
+          else if (idx === 5) icon = 'fa-box-open';
+          else if (idx === 6) icon = 'fa-flag-checkered';
+          else if (idx === 7) icon = 'fa-times-circle';
+          html += `<div class="${cls}"><i class="fas ${icon} step-icon"></i><span class="step-label">${label}</span></div>`;
+        });
+        html += '</div>';
+        return html;
+      }
+
+      // Render shipment details
+      function renderShipment(data, trackingCode) {
+        if (!data) {
+          shipmentDetail.style.display = 'block';
+          shipmentDetail.innerHTML = `
+            <div class="error-card">
+              <h4><i class="fas fa-exclamation-triangle"></i> Tracking Code Not Found</h4>
+              <p>Please verify the tracking code and try again. If the issue persists, contact support.</p>
+            </div>
+          `;
+          return;
+        }
+        const status = data.status || 'Pending';
+        const ts = data.submitted_at || Date.now();
+        const quotation = data.total_quotation ? `₹${Number(data.total_quotation).toLocaleString('en-IN')}` : '—';
+        const dimensions = data.dimensions ? `${data.dimensions.length||''}×${data.dimensions.width||''}×${data.dimensions.height||''}` : '—';
+        const pickup = data.origin || '—';
+        const dest = data.destination || '—';
+
+        let html = `
+          <div class="track-card" style="background: var(--card-bg, #1e2a3a); border-radius: 28px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);">
+            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; border-bottom: 1px solid #2a3a4a; padding-bottom: 12px; margin-bottom: 16px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-weight: 700; font-size: 1.3rem; color: #f57c00;">${trackingCode}</span>
+                <button class="copy-btn" onclick="navigator.clipboard.writeText('${trackingCode}'); alert('Tracking code copied!');"><i class="fas fa-copy"></i></button>
+                <span class="status-badge" style="background:${statusColor(status)}; color:#0b1420;">${status}</span>
+              </div>
+              <span style="font-size:0.8rem; opacity:0.6;"><i class="far fa-clock"></i> ${formatDate(ts)}</span>
+            </div>
+            <div class="detail-grid">
+              <div class="detail-item"><span class="label">Customer</span><span class="value">${data.customer_name || '—'}</span></div>
+              <div class="detail-item"><span class="label">Contact</span><span class="value">${data.customer_contact || '—'}</span></div>
+              <div class="detail-item"><span class="label">Receiver</span><span class="value">${data.receiver_name || '—'}</span></div>
+              <div class="detail-item"><span class="label">Receiver contact</span><span class="value">${data.receiver_contact || '—'}</span></div>
+              <div class="detail-item"><span class="label">Receiver address</span><span class="value">${data.receiver_address || '—'}</span></div>
+              <div class="detail-item"><span class="label">Pickup</span><span class="value">${pickup}</span></div>
+              <div class="detail-item"><span class="label">Destination</span><span class="value">${dest}</span></div>
+              <div class="detail-item"><span class="label">Package type</span><span class="value">${data.package_type || '—'}</span></div>
+              <div class="detail-item"><span class="label">Transport mode</span><span class="value">${data.transport_mode || '—'}</span></div>
+              <div class="detail-item"><span class="label">Weight (kg)</span><span class="value">${data.weight_kg || '—'}</span></div>
+              <div class="detail-item"><span class="label">Dimensions</span><span class="value">${dimensions}</span></div>
+              <div class="detail-item"><span class="label">Quotation</span><span class="value quotation-highlight">${quotation}</span></div>
+            </div>
+            <div style="margin-top: 8px; font-size:0.85rem; opacity:0.6;">Booking: ${formatDate(ts)} · Last updated: ${formatDate(data.lastUpdated || ts)}</div>
+            ${buildTimeline(status)}
+          </div>
+        `;
+        shipmentDetail.style.display = 'block';
+        shipmentDetail.innerHTML = html;
+        welcomeCard.style.display = 'none';
+      }
+
+      // Search handler
+      function performSearch(query) {
+        if (!query || query.trim() === '') {
+          // show welcome
+          shipmentDetail.style.display = 'none';
+          welcomeCard.style.display = 'block';
+          return;
+        }
+        const q = query.trim().toLowerCase();
+        // show loading
+        shipmentDetail.style.display = 'block';
+        shipmentDetail.innerHTML = `<div style="padding:40px;text-align:center;"><div class="loading-spinner"></div><p style="margin-top:12px;">Searching...</p></div>`;
+        welcomeCard.style.display = 'none';
+
+        // First try direct tracking code match (key)
+        const trackRef = db.ref('customer_requests/' + q);
+        trackRef.once('value').then(snap => {
+          if (snap.exists()) {
+            renderShipment(snap.val(), q);
+            return;
+          }
+          // else search by customer name or contact across all shipments
+          db.ref('customer_requests').orderByKey().once('value').then(allSnap => {
+            const results = [];
+            allSnap.forEach(child => {
+              const val = child.val();
+              const code = child.key;
+              const name = (val.customer_name || '').toLowerCase();
+              const contact = (val.customer_contact || '').toLowerCase();
+              if (name.includes(q) || contact.includes(q) || code.toLowerCase().includes(q)) {
+                results.push({ code, ...val });
+              }
+            });
+            if (results.length === 0) {
+              renderShipment(null, '');
+              return;
+            }
+            if (results.length === 1) {
+              renderShipment(results[0], results[0].code);
+              return;
+            }
+            // multiple results: show list
+            let listHtml = `<div style="background:var(--card-bg, #1e2a3a); border-radius:24px; padding:20px;"><h4><i class="fas fa-list"></i> Multiple shipments found</h4><div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;">`;
+            results.forEach(item => {
+              listHtml += `<div class="recent-card" style="cursor:pointer;" onclick="document.getElementById('searchInput').value='${item.code}'; performSearch('${item.code}');">
+                <span class="track-code">${item.code}</span> · ${item.customer_name} <span class="status-badge" style="background:${statusColor(item.status)};color:#0b1420;margin-left:8px;">${item.status||'Pending'}</span>
+              </div>`;
+            });
+            listHtml += `</div></div>`;
+            shipmentDetail.style.display = 'block';
+            shipmentDetail.innerHTML = listHtml;
+          }).catch(err => {
+            shipmentDetail.innerHTML = `<div class="error-card"><h4>Network error</h4><p>${err.message || 'Could not fetch data.'}</p></div>`;
+          });
+        }).catch(err => {
+          shipmentDetail.innerHTML = `<div class="error-card"><h4>Error</h4><p>${err.message || 'Something went wrong.'}</p></div>`;
+        });
+      }
+
+      // Expose for inline onclick
+      window.performSearch = performSearch;
+
+      // Search button click
+      searchBtn.addEventListener('click', function() {
+        performSearch(searchInput.value);
+      });
+      searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') performSearch(searchInput.value);
+      });
+
+      // Load recent shipments (live listener)
+      function loadRecent() {
+        const recentRef = db.ref('customer_requests').orderByChild('submitted_at').limitToLast(10);
+        recentRef.on('value', snap => {
+          const data = [];
+          snap.forEach(child => {
+            const val = child.val();
+            val.code = child.key;
+            data.push(val);
+          });
+          // reverse to show newest first (since limitToLast gives oldest of the last 10)
+          data.reverse();
+          if (data.length === 0) {
+            recentGrid.innerHTML = '<p style="opacity:0.5; grid-column:1/-1; text-align:center;">No shipments yet.</p>';
+            return;
+          }
+          let html = '';
+          data.forEach(item => {
+            const status = item.status || 'Pending';
+            html += `<div class="recent-card" onclick="document.getElementById('searchInput').value='${item.code}'; performSearch('${item.code}');">
+              <div><span class="track-code">${item.code}</span> <span class="status-badge" style="background:${statusColor(status)}; color:#0b1420; font-size:0.7rem;">${status}</span></div>
+              <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:0.9rem;">
+                <span>${item.customer_name || '—'}</span>
+                <span class="quotation-highlight">₹${Number(item.total_quotation||0).toLocaleString('en-IN')}</span>
+              </div>
+              <div style="font-size:0.7rem; opacity:0.6;">${item.transport_mode || '—'} · ${formatDate(item.submitted_at)}</div>
+            </div>`;
+          });
+          recentGrid.innerHTML = html;
+        }, err => {
+          recentGrid.innerHTML = `<p style="color:#ef5350;">Error loading recent: ${err.message}</p>`;
+        });
+      }
+
+      loadRecent();
+
+      // Live listener for current displayed shipment (if any)
+      // We attach a listener when a shipment is rendered with a known code.
+      // Override renderShipment to attach listener
+      const originalRender = renderShipment;
+      renderShipment = function(data, trackingCode) {
+        originalRender(data, trackingCode);
+        if (data && trackingCode) {
+          // attach live listener for this specific tracking code
+          const ref = db.ref('customer_requests/' + trackingCode);
+          ref.on('value', snap => {
+            if (snap.exists()) {
+              const newData = snap.val();
+              // re-render if data changed
+              if (JSON.stringify(newData) !== JSON.stringify(data)) {
+                originalRender(newData, trackingCode);
+              }
+            }
+          });
+        }
+      };
+      // Also re-attach for search results
+      const oldPerform = performSearch;
+      performSearch = function(query) {
+        oldPerform(query);
+      };
+
+      // initial: show welcome and recent
+      welcomeCard.style.display = 'block';
+      shipmentDetail.style.display = 'none';
+    })();
+  </script>
+</body>
+</html>
+```
